@@ -2,7 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Profile } from './profile.entity';
 
 @Entity()
-export class CategoriaFinanceira {
+export class FinancialCategory {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
@@ -12,7 +12,7 @@ export class CategoriaFinanceira {
     @Column()
     type: string;
 
-    @ManyToOne(() => Profile, (profile) => profile.categorias)
+    @ManyToOne(() => Profile, (profile) => profile.categories)
     profile: Profile;
 
     @Column({ default: true })

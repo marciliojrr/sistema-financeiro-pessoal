@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './user.entity';
-import { CategoriaFinanceira } from './categoria.entity';
+import { FinancialCategory } from './category.entity';
 
 @Entity()
 export class Profile {
@@ -16,6 +16,6 @@ export class Profile {
     @ManyToOne(() => User, (user) => user.profiles)
     user: User;
 
-    @OneToMany(() => CategoriaFinanceira, (categoria) => categoria.profile)
-    categorias: CategoriaFinanceira[];
+    @OneToMany(() => FinancialCategory, (category) => category.profile)
+    categories: FinancialCategory[];
 }

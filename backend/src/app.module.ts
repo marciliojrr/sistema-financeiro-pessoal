@@ -7,8 +7,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabaseConfig } from './config/database.config';
 import { User } from './database/entities/user.entity';
 import { Profile } from './database/entities/profile.entity';
-import { CategoriaFinanceira } from './database/entities/categoria.entity';
+import { FinancialCategory } from './database/entities/category.entity';
 import { UsersModule } from './users/users.module';
+import { ProfilesModule } from './profiles/profiles.module';
+import { CategoriesModule } from './categories/categories.module';
+
 
 @Module({
   imports: [
@@ -29,13 +32,18 @@ import { UsersModule } from './users/users.module';
     TypeOrmModule.forFeature([
       User,
       Profile,
-      CategoriaFinanceira,
+      FinancialCategory,
     ]),
 
     // Módulo de saúde da aplicação
     HealthModule,
 
     UsersModule,
+
+    ProfilesModule,
+
+    CategoriesModule,
+
   ],
   controllers: [AppController],
   providers: [AppService],
