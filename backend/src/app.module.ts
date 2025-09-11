@@ -8,6 +8,7 @@ import { getDatabaseConfig } from './config/database.config';
 import { User } from './database/entities/user.entity';
 import { Profile } from './database/entities/profile.entity';
 import { CategoriaFinanceira } from './database/entities/categoria.entity';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -33,6 +34,8 @@ import { CategoriaFinanceira } from './database/entities/categoria.entity';
 
     // Módulo de saúde da aplicação
     HealthModule,
+
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
