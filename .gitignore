@@ -1,0 +1,40 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Produção/Compilação
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Docker
+docker/*.log
+docker/*.pid
+
+# Banco de dados
+postgres_data/
+pgadmin_data/
+*.sqlite
+*.db
+
+# Ambiente
+.env*
+.env.*.local
+*.local
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+
+# Misc
+.DS_Store
+*.bak
+*.tmp
+*.log
