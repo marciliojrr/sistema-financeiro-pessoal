@@ -12,6 +12,7 @@ import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { CategoriesModule } from './categories/categories.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
@@ -44,6 +45,8 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     ProfilesModule,
 
     CategoriesModule,
+
+    AuthModule,
 
   ],
   controllers: [AppController],

@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { SimpleAuthGuard } from 'src/common/guards/auth.guard';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
-@UseGuards(SimpleAuthGuard)
 @Controller('users')
+//@UseGuards(JwtAuthGuard)
 export class UsersController {
     constructor(private readonly userService: UsersService) {}
 
