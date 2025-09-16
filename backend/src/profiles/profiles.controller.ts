@@ -1,11 +1,13 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
-import {  } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-@Controller('profiles')
+@ApiTags('profiles')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
+@Controller('profiles')
 export class ProfilesController {
     constructor(private readonly profileService: ProfilesService) {}
 

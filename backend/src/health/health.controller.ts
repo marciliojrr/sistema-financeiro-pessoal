@@ -1,16 +1,22 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
 import { time } from 'console';
 import { platform, version } from 'os';
 import { uptime } from 'process';
 import { Connection } from 'typeorm';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/common/decorators/public.decorator';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('health')
+@UseGuards(JwtAuthGuard)
 @Controller('health')
 export class HealthController {
   constructor(
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
+  @Public()
   @Get()
   async check() {
     let databaseStatus = 'Disconnected';
@@ -32,6 +38,7 @@ export class HealthController {
     };
   }
 
+  @Public()
   @Get('detailed')
   async detailedCheck() {
     let databaseStatus = 'Disconnected';

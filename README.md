@@ -165,6 +165,11 @@ O desenvolvimento segue um planejamento em fases:
 - Escreva testes para novas funcionalidades
 - Mantenha a documentação atualizada
 
+### API e Documentação
+- A documentação da API está disponível através do Swagger
+- Acesse: `http://localhost:3001/api/docs` quando o servidor estiver em execução
+- **Importante**: Ao autenticar-se no Swagger, utilize apenas o token obtido após o login, sem incluir o prefixo "Bearer"
+
 ## 📞 Contato
 
 Para questões, sugestões ou problemas, entre em contato:

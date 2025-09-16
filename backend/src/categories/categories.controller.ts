@@ -2,9 +2,12 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/c
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-@Controller('categories')
+@ApiTags('categories')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
+@Controller('categories')
 export class CategoriesController {
     constructor(private readonly categoryService: CategoriesService) {}
 
@@ -27,5 +30,4 @@ export class CategoriesController {
     remove(@Param('id') id: string) {
         return this.categoryService.remove(id);
     }
-
 }
