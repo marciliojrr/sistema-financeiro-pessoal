@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Profile } from './profile.entity';
+import { FinancialMovement } from './financial-movement.entity';
 
 @Entity()
 export class FinancialCategory {
@@ -17,4 +18,7 @@ export class FinancialCategory {
 
     @Column({ default: true })
     active: boolean;
+
+    @OneToMany(() => FinancialMovement, movement => movement.category)
+    financialMovements: FinancialMovement[];
 }

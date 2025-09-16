@@ -7,7 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabaseConfig } from './config/database.config';
 import { User } from './database/entities/user.entity';
 import { Profile } from './database/entities/profile.entity';
-import { FinancialCategory } from './database/entities/category.entity';
+import { FinancialCategory } from './database/entities/financial-category.entity';
 import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { CategoriesModule } from './categories/categories.module';

@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './user.entity';
-import { FinancialCategory } from './category.entity';
+import { FinancialCategory } from './financial-category.entity';
+import { FinancialMovement } from './financial-movement.entity';
 
 @Entity()
 export class Profile {
@@ -18,4 +19,7 @@ export class Profile {
 
     @OneToMany(() => FinancialCategory, (category) => category.profile)
     categories: FinancialCategory[];
+
+    @OneToMany(() => FinancialMovement, movement => movement.profile)
+    financialMovements: FinancialMovement[];
 }
