@@ -13,6 +13,8 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { CategoriesModule } from './categories/categories.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { AuthModule } from './auth/auth.module';
+import { FinancialMovementsModule } from './financial-movements/financial-movements.module';
+import { FinancialMovement } from './database/entities/financial-movement.entity';
 
 
 @Module({
@@ -35,6 +37,7 @@ import { AuthModule } from './auth/auth.module';
       User,
       Profile,
       FinancialCategory,
+      FinancialMovement
     ]),
 
     // Módulo de saúde da aplicação
@@ -47,6 +50,8 @@ import { AuthModule } from './auth/auth.module';
     CategoriesModule,
 
     AuthModule,
+
+    FinancialMovementsModule,
 
   ],
   controllers: [AppController],

@@ -24,10 +24,10 @@ export class FinancialMovement {
     @Column({ nullable: true })
     notes?: string;
 
-    @ManyToOne(() => Profile, profile => profile.FinancialMovements)
+    @ManyToOne(() => Profile, profile => profile.financialMovements)
     profile: Profile;
 
-    @ManyToOne(() => FinancialCategory, category => category.FinancialMovements)
+    @ManyToOne(() => FinancialCategory, category => category.financialMovements)
     category: FinancialCategory;
 
     @CreateDateColumn()
