@@ -18,6 +18,8 @@ export class FinancialMovementsController {
 
     @Get()
     findAll(@Req() req, @Query() query) {
+        console.log('Query Params:', query);
+        console.log('User ID:', req.user.userId);
         return this.movementService.findAll(req.user.userId, query);
     }
 

@@ -41,10 +41,12 @@ export class FinancialMovementsService {
 
     async findAll(userId: string, filters?: any) {
         // Busca todas as movimentações só dos perfis do usuário autenticado, com filtros
-        const query = this.movementRepository
-            .createQueryBuilder('movement')
-            .leftJoinAndSelect('movement.profie', 'profile')
-            .leftJoinAndSelect('movement.category', 'category')
+        try {
+            const query = this.movementRepository
+                .createQueryBuilder('movement')
+                .leftJoinAndSelect('movement.profile', 'profile')
+                .leftJoinAndSelect('movement.category', 'category')
+                .leftJoin('profile.user', 'user')
             .where('profile.user.id = :userId', { userId });
 
         if (filters?.profileId) query.andWhere('profile.id = :profileId', { profileId: filters.profileId });
@@ -53,6 +55,11 @@ export class FinancialMovementsService {
         if (filters?.endDate) query.andWhere('movement.date <= :endDate', { endDate: filters.endDate });
 
         return query.orderBy('movement.date', 'DESC').getMany();
+        } catch (err) {
+          // Log no console tudo do erro:
+            console.error('Erro no findAll financial-movements:', err.message, err.stack);
+            throw err; // deixa o Nest responder o erro via ExceptionFilter, mas agora com mensagem SQL
+        }
     }
 
     async findOne(id: string, userId: string) {
