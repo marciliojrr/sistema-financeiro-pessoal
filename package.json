@@ -17,6 +17,7 @@
     "@nestjs/common": "^11.1.6",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/typeorm": "^11.0.0",
+    "class-validator": "^0.14.2",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
