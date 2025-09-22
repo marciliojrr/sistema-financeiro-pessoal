@@ -35,4 +35,7 @@ export class FinancialMovement {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @Column({ type: 'varchar', length: 255 })
+    description: string;
 }
