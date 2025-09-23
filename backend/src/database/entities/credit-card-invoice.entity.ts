@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { CreditCard } from './credit-card.entity';
-import { InstallmentPurchase } from './installment-purchase.entity';
+import { InstallmentItem } from './installment-item.entity';
 
 @Entity('credit_card_invoices')
 export class CreditCardInvoice {
@@ -8,7 +8,7 @@ export class CreditCardInvoice {
     id: string;
 
     @Column()
-    month: number; // Ex: '2025-09'
+    month: string; // Ex: '2025-09'
 
     @Column('decimal', { precision: 12, scale: 2 })
     totalAmount: number;
@@ -19,6 +19,6 @@ export class CreditCardInvoice {
     @ManyToOne(() => CreditCard, creditCard => creditCard.invoices)
     creditCard: CreditCard;
 
-    @OneToMany(() => InstallmentPurchase, purchase => purchase.invoices, { nullable: true })
-    purchase: InstallmentPurchase;
+    @OneToMany(() => InstallmentItem, item => item.creditCardInvoice)
+    installmentItems: InstallmentItem[];
 }

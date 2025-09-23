@@ -17,8 +17,4 @@ export class CreateCreditCardInvoiceDto {
     @ApiProperty( { example: 'uuid-do-cartao-de-credito', description: 'ID do cartão de crédito associado à fatura' } )
     @IsUUID()
     creditCardId: string;
-
-    @ApiProperty( { example: 'uuid-da-compra-parcelada', description: 'ID da compra parcelada associada à fatura (opcional)', required: false } )
-    @IsUUID()
-    purchaseId?: string;
 }
