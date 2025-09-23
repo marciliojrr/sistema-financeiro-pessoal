@@ -5,6 +5,7 @@ import { FinancialMovement } from 'src/database/entities/financial-movement.enti
 import { CreateFinancialMovementDto } from './dto/create-financial-movement.dto';
 import { Profile } from 'src/database/entities/profile.entity';
 import { FinancialCategory } from 'src/database/entities/financial-category.entity';
+import { UpdateFinancialMovementDto } from './dto/update-financial-movement.dto';
 
 @Injectable()
 export class FinancialMovementsService {
@@ -78,10 +79,11 @@ export class FinancialMovementsService {
         return { deleted: true };
     }
 
-    async update(id: string, data: Partial<CreateFinancialMovementDto>, userId: string) {
-        const movement = await this.findOne(id, userId);
+    async update(id: string, data: UpdateFinancialMovementDto, userId: string) {
+        const movement = await this.movementRepository.findOne({ where: { id }, relations: ['profile', 'profile.user', 'category'] });
 
         if (!movement) throw new NotFoundException('Movimentação não encontrada.');
+        if (movement.profile.user.id !== userId) throw new ForbiddenException('Acesso negado.');
 
         // Se profileId for alterado, valide propriedade e existência
         if (data.profileId && data.profileId !== movement.profile.id) {
