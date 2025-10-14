@@ -1,14 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between, IsNull } from 'typeorm';
 import { CreditCard } from '../database/entities/credit-card.entity';
 import { InstallmentPurchase } from '../database/entities/installment-purchase.entity';
 import { CreditCardInvoice } from '../database/entities/credit-card-invoice.entity';
-import { InstallmentItem } from '../database/entities/installment-item.entity'; // ADICIONAR
+import { InstallmentItem } from '../database/entities/installment-item.entity'; 
 import { CreateCreditCardDto } from './dto/create-credit-card.dto';
 import { CreateInstallmentPurchaseDto } from './dto/create-installment-purchase.dto';
 import { Profile } from 'src/database/entities/profile.entity';
 import { CreateCreditCardInvoiceDto } from './dto/create-credit-card-invoice.dto';
+import { addMonths, format } from 'date-fns';
 
 @Injectable()
 export class CreditCardsService {
@@ -110,5 +111,53 @@ export class CreditCardsService {
     });
     
     return this.invoiceRepository.save(invoice);
+  }
+
+  async closeInvoice(creditCardId: string, year: number, month: number, userId: string) {
+    const card = await this.creditCardRepository.findOne({
+      where: { id: creditCardId },
+      relations: ['profile', 'profile.user']
+    });
+
+    if (!card) throw new NotFoundException('Cartão não encontrado.');
+    if (card.profile.user.id !== userId) throw new ForbiddenException('Acesso negado.');
+
+    // Descobre o inicio e fim do mês de referência
+    const startDate = new Date(year, month -1, 1, 0, 0, 0);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    // Busca todas as parcelas do cartão, não pagas, vencendo dentro do mês
+    const installmentItems = await this.installmentItemRepository.find({
+      where: {
+        creditCardInvoice: IsNull(),
+        paid: false,
+        dueDate: Between(startDate, endDate),
+        installmentPurchase: { creditCard: { id: creditCardId } }
+      },
+      relations: ['installmentPurchase'],
+    });
+
+    if (!installmentItems || !installmentItems.length) throw new NotFoundException('Nenhuma parcela encontrada para o período.');
+
+    // Cria a fatura
+    const invoice = this.invoiceRepository.create({
+      month: `${year}-${month.toString().padStart(2, '0')}`,
+      totalAmount: installmentItems.reduce((total, item) => total + Number(item.amount), 0),
+      paid: false,
+      creditCard: card
+    });
+
+    const savedInvoice = await this.invoiceRepository.save(invoice);
+
+    // Atualiza as parcelas vinculando-as à fatura recém-criada
+    for (const item of installmentItems) {
+      item.creditCardInvoice = savedInvoice;
+      await this.installmentItemRepository.save(item);
+    }
+
+    return {
+      invoice: savedInvoice,
+      items: installmentItems
+    }
   }
 }
