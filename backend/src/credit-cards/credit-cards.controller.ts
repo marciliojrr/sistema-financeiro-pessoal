@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreditCardsService } from './credit-cards.service';
@@ -16,5 +16,13 @@ export class CreditCardController {
         return this.creditCardsService.createCreditCard(dto, req.user.id);
     }
 
-    // Implementar endpoints similares para compras parceladas e faturas
+    @Post(':cardId/invoices/close')
+    async closeInvoice(
+        @Param('cardId') cardId: string,
+        @Body('year') year: number,
+        @Body('month') month: number,
+        @Req() req
+    ) {
+        return this.creditCardsService.closeInvoice(cardId, year, month, req.user.id);
+    }   
 }
