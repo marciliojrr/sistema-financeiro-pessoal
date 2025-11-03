@@ -5,7 +5,7 @@ import { CreditCardsService } from './credit-cards.service';
 import { CreateCreditCardDto } from './dto/create-credit-card.dto';
 
 @ApiTags('credit-cards')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('credit-cards')
 export class CreditCardController {
@@ -13,7 +13,7 @@ export class CreditCardController {
 
     @Post()
     createCreditCard(@Body() dto: CreateCreditCardDto, @Req() req) {
-        return this.creditCardsService.createCreditCard(dto, req.user.id);
+        return this.creditCardsService.createCreditCard(dto, req.user.userId);
     }
 
     @Post(':cardId/invoices/close')
@@ -23,6 +23,6 @@ export class CreditCardController {
         @Body('month') month: number,
         @Req() req
     ) {
-        return this.creditCardsService.closeInvoice(cardId, year, month, req.user.id);
+        return this.creditCardsService.closeInvoice(cardId, year, month, req.user.userId);
     }   
 }

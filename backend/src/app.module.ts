@@ -15,6 +15,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { AuthModule } from './auth/auth.module';
 import { FinancialMovementsModule } from './financial-movements/financial-movements.module';
 import { FinancialMovement } from './database/entities/financial-movement.entity';
+import { CreditCardsModule } from './credit-cards/credit-cards.module';
 
 
 @Module({
@@ -52,6 +53,8 @@ import { FinancialMovement } from './database/entities/financial-movement.entity
     AuthModule,
 
     FinancialMovementsModule,
+
+    CreditCardsModule
 
   ],
   controllers: [AppController],
