@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreditCardsService } from './credit-cards.service';
 import { CreateCreditCardDto } from './dto/create-credit-card.dto';
+import { CloseCreditCardInvoiceDto } from './dto/close-credit-card-invoice.dto';
 
 @ApiTags('credit-cards')
 @ApiBearerAuth('access-token')
@@ -19,10 +20,9 @@ export class CreditCardController {
     @Post(':cardId/invoices/close')
     async closeInvoice(
         @Param('cardId') cardId: string,
-        @Body('year') year: number,
-        @Body('month') month: number,
+        @Body() dto: CloseCreditCardInvoiceDto,
         @Req() req
     ) {
-        return this.creditCardsService.closeInvoice(cardId, year, month, req.user.userId);
+        return this.creditCardsService.closeInvoice(cardId, dto.year, dto.month, req.user.userId);
     }   
 }
