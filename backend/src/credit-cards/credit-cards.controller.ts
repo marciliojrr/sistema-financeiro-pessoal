@@ -4,6 +4,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreditCardsService } from './credit-cards.service';
 import { CreateCreditCardDto } from './dto/create-credit-card.dto';
 import { CloseCreditCardInvoiceDto } from './dto/close-credit-card-invoice.dto';
+import { CreateInstallmentPurchaseDto } from './dto/create-installment-purchase.dto';
 
 @ApiTags('credit-cards')
 @ApiBearerAuth('access-token')
@@ -24,5 +25,10 @@ export class CreditCardController {
         @Req() req
     ) {
         return this.creditCardsService.closeInvoice(cardId, dto.year, dto.month, req.user.userId);
-    }   
+    }
+
+    @Post('installment-purchases')
+    createInstallmentPurchase(@Body() dto: CreateInstallmentPurchaseDto, @Req() req) {
+        return this.creditCardsService.createInstallmentPurchase(dto, req.user.userId);
+    }
 }
