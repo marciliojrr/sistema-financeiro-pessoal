@@ -9,6 +9,7 @@ import { CreateCreditCardDto } from './dto/create-credit-card.dto';
 import { CreateInstallmentPurchaseDto } from './dto/create-installment-purchase.dto';
 import { Profile } from 'src/database/entities/profile.entity';
 import { CreateCreditCardInvoiceDto } from './dto/create-credit-card-invoice.dto';
+import { FinancialMovement, MovementType } from 'src/database/entities/financial-movement.entity';
 //import { addMonths, format } from 'date-fns';
 
 @Injectable()
@@ -25,6 +26,9 @@ export class CreditCardsService {
 
     @InjectRepository(InstallmentItem)
     private readonly installmentItemRepository: Repository<InstallmentItem>,
+
+    @InjectRepository(FinancialMovement)
+    private readonly financialMovementRepository: Repository<FinancialMovement>,
 
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>
@@ -159,5 +163,42 @@ export class CreditCardsService {
       invoice: savedInvoice,
       items: installmentItems
     }
+  }
+
+  async payInvoice(invoiceId: string, userId: string, profileId: string) {
+    // Buscar fatura e validar
+    const invoice = await this.invoiceRepository.findOne({
+      where: { id: invoiceId },
+      relations: ['creditCard', 'creditCard.profile', 'installmentItems']
+    });
+
+    if (!invoice) throw new NotFoundException('Fatura não encontrada.');
+    if (invoice.creditCard.profile.id !== profileId) throw new ForbiddenException('Acesso negado.');
+    if (invoice.paid) throw new ForbiddenException('Fatura já está paga.');
+
+    // Marcar fatura como paga
+    invoice.paid = true;
+    await this.invoiceRepository.save(invoice);
+
+    // Marcar todas as parcelas da fatura como pagas
+    // TODO: verficar se ha maneira mais performatica de fazer isto
+    //       para nao ser necessario tantas chamadas ao banco dentro do loop
+    for (const item of invoice.installmentItems) {
+      item.paid = true;
+      await this.installmentItemRepository.save(item);
+    }
+
+    // Criar movimentacao financeira de saida (pagamento da fatura)
+    const paymentMovement = this.financialMovementRepository.create({
+      amount: invoice.totalAmount,
+      type: MovementType.EXPENSE,
+      description: `Pagamento da fatura do cartão ${invoice.creditCard.cardName} - ${invoice.month}`,
+      date: new Date(),
+      profile: invoice.creditCard.profile,
+    });
+
+    await this.financialMovementRepository.save(paymentMovement);
+
+    return { message: 'Fatura paga com sucesso.', invoice, paymentMovement };
   }
 }

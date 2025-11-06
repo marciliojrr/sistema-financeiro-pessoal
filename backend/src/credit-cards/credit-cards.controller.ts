@@ -5,6 +5,7 @@ import { CreditCardsService } from './credit-cards.service';
 import { CreateCreditCardDto } from './dto/create-credit-card.dto';
 import { CloseCreditCardInvoiceDto } from './dto/close-credit-card-invoice.dto';
 import { CreateInstallmentPurchaseDto } from './dto/create-installment-purchase.dto';
+import { PayCreditCardInvoiceDto } from './dto/pay-credit-card-invoice.dto';
 
 @ApiTags('credit-cards')
 @ApiBearerAuth('access-token')
@@ -30,5 +31,14 @@ export class CreditCardController {
     @Post('installment-purchases')
     createInstallmentPurchase(@Body() dto: CreateInstallmentPurchaseDto, @Req() req) {
         return this.creditCardsService.createInstallmentPurchase(dto, req.user.userId);
+    }
+
+    @Post('invoices/:invoiceId/pay')
+    payInvoice(
+        @Param('invoiceId') invoiceId: string,
+        @Body() dto: PayCreditCardInvoiceDto,
+        @Req() req
+    ) {
+        return this.creditCardsService.payInvoice(invoiceId, req.user.userId, dto.profileId);
     }
 }
