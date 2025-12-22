@@ -2,11 +2,12 @@
 
 Um sistema web completo para controle financeiro pessoal, desenvolvido com tecnologias modernas para proporcionar uma experiência intuitiva e eficiente na gestão de suas finanças.
 
-![Status](https://img.shields.io/badge/Backend-100%25_Implementado-brightgreen)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
-![NestJS](https://img.shields.io/badge/NestJS-10-red)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-98.5%25-3178C6)
+![JavaScript](https://img.shields.io/badge/JavaScript-0.8%25-F7DF1E)
+![CSS](https://img.shields.io/badge/CSS-0.4%25-1572B6)
+![Dockerfile](https://img.shields.io/badge/Dockerfile-0.2%25-2496ED)
+![Other](https://img.shields.io/badge/Other-0.1%25-lightgrey)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED)
 
 ## 📋 Visão Geral
 
