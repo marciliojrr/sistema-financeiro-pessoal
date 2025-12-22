@@ -4,7 +4,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
-  DeleteDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Budget } from './budget.entity';
@@ -16,6 +15,12 @@ import { Notification } from './notification.entity';
 import { Reserve } from './reserve.entity';
 import { FinancialScenario } from './financial-scenario.entity';
 
+export enum ProfileRole {
+  ADMIN = 'admin',      // Controle total: criar, editar, excluir
+  EDITOR = 'editor',    // Pode editar mas não excluir
+  VIEWER = 'viewer',    // Apenas visualização
+}
+
 @Entity()
 export class Profile {
   @PrimaryGeneratedColumn('uuid')
@@ -23,6 +28,12 @@ export class Profile {
 
   @Column()
   name: string;
+
+  @Column({
+    type: 'varchar',
+    default: ProfileRole.ADMIN,
+  })
+  role: ProfileRole;
 
   @Column({ unique: true })
   active: boolean;
