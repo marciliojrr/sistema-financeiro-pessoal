@@ -3,14 +3,13 @@
 Um sistema web completo para controle financeiro pessoal, desenvolvido com tecnologias modernas para proporcionar uma experiência intuitiva e eficiente na gestão de suas finanças.
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-80%25-blue)
-![JavaScript](https://img.shields.io/badge/JavaScript-8.6%25-yellow)
-![CSS](https://img.shields.io/badge/CSS-2.9%25-purple)
-![Dockerfile](https://img.shields.io/badge/Dockerfile-3.1%25-blue)
-![Makefile](https://img.shields.io/badge/Makefile-5.4%25-lightgrey)
+![NestJS](https://img.shields.io/badge/NestJS-Backend-red)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
 
 ## 📋 Visão Geral
 
-Este projeto tem como objetivo desenvolver uma plataforma web completa para controle financeiro pessoal, fornecendo ferramentas para gerenciamento de receitas, despesas, reservas, cartões de crédito e planejamento financeiro. O sistema busca proporcionar clareza sobre a saúde financeira do usuário, auxiliando na tomada de decisões e na criação de hábitos financeiros saudáveis.
+Este projeto tem como objetivo desenvolver uma plataforma web completa para controle financeiro pessoal, fornecendo ferramentas para gerenciamento de receitas, despesas, reservas, cartões de crédito e planejamento financeiro.
 
 ### 🎯 Público-Alvo
 
@@ -18,161 +17,171 @@ Este projeto tem como objetivo desenvolver uma plataforma web completa para cont
 - Usuários que buscam controle detalhado sobre gastos fixos, variáveis, reservas e cartões de crédito
 - Usuários que valorizam facilidade de uso, visualização clara e informações atualizadas
 
-## ✨ Funcionalidades
+## ✅ Status do Projeto
 
-### Gerenciamento Financeiro
+### Backend: **100% Implementado** 🎉
 
-- **Categorias Financeiras**: Cadastro, edição e exclusão de categorias personalizadas
-- **Lançamento de Movimentações**: Registro detalhado de receitas e despesas
-- **Reservas Financeiras**: Gestão de reservas com metas e prazos
-- **Central de Cartões de Crédito**: Controle completo de cartões, parcelas e faturas
+| Métrica           | Valor |
+| ----------------- | ----- |
+| **Entidades**     | 14    |
+| **Módulos**       | 16    |
+| **Endpoints API** | 70+   |
+| **Cron Jobs**     | 4     |
 
-### Planejamento e Análise
+### Frontend: **Aguardando Desenvolvimento**
 
-- **Planejamento Orçamentário**: Previsão e comparativo de receitas e despesas
-- **Dashboards e Relatórios**: Visualizações personalizáveis e relatórios detalhados
-- **Simulação Financeira**: Criação de cenários hipotéticos para análise de impacto
-- **Importação e Exportação**: Suporte a importação de extratos e exportação de dados
+---
 
-### Organização e Segurança
+## ✨ Funcionalidades Implementadas
 
-- **Múltiplos Perfis**: Suporte a vários perfis financeiros vinculados a uma conta
-- **Avisos e Notificações**: Alertas personalizáveis para eventos financeiros importantes
-- **Segurança Avançada**: Autenticação segura e backup de dados
-- **Gerenciamento de Dívidas**: Controle de empréstimos e dívidas com juros e parcelas
+### 💰 Gerenciamento Financeiro
+
+- ✅ **Categorias Financeiras**: CRUD completo com categorias personalizadas
+- ✅ **Movimentações**: Receitas e despesas com filtros e soft delete
+- ✅ **Reservas Financeiras**: Metas, prazos, auto-save automático
+- ✅ **Dívidas**: Controle de parcelas, juros e amortizações
+
+### 💳 Central de Cartões de Crédito
+
+- ✅ Cadastro múltiplo de cartões
+- ✅ Compras parceladas com geração automática de parcelas
+- ✅ Fechamento e pagamento de faturas
+- ✅ **Sugestão do melhor cartão** para novas compras
+
+### 📊 Analytics e Relatórios
+
+- ✅ Dashboard com resumo financeiro
+- ✅ Gráficos por categoria e evolução mensal
+- ✅ Exportação para CSV
+- ✅ Planejamento orçamentário (planejado vs realizado)
+
+### 🎭 Modo Simulação
+
+- ✅ Criação de cenários hipotéticos
+- ✅ Clonagem de dados reais para simulação
+- ✅ Comparação cenário vs realidade
+
+### 📥 Importação/Exportação
+
+- ✅ Importação de arquivos OFX (extratos bancários)
+- ✅ Importação de arquivos CSV
+- ✅ Estrutura Open Banking preparada
+
+### 🔔 Automação e Notificações
+
+- ✅ Alertas de orçamento estourado (8:00 AM)
+- ✅ Lembretes de contas a vencer (9:00 AM)
+- ✅ Auto-save de reservas (10:00 AM)
+- ✅ Alertas de metas de reservas (11:00 AM)
+
+### 👥 Múltiplos Perfis
+
+- ✅ Perfis independentes por usuário
+- ✅ Roles diferenciadas: **ADMIN**, **EDITOR**, **VIEWER**
+- ✅ RolesGuard para autorização por perfil
+
+### 🔒 Segurança
+
+- ✅ Autenticação JWT
+- ✅ Validação de propriedade em todos os endpoints
+- ✅ Soft delete com histórico
+- ✅ Audit logs para rastreamento
+
+---
 
 ## 🛠️ Tecnologias Utilizadas
 
 ### Backend
-- **NestJS**: Framework Node.js para construção de APIs robustas
-- **PostgreSQL**: Banco de dados relacional para persistência de dados
-- **TypeScript**: Linguagem de programação tipada para maior segurança
 
-### Frontend
-- **NextJS/React**: Framework para construção de interfaces modernas e responsivas
-- **TypeScript**: Para desenvolvimento frontend mais seguro e previsível
-- **CSS**: Estilização de componentes e layouts
+- **NestJS** - Framework Node.js
+- **PostgreSQL** - Banco de dados
+- **TypeORM** - ORM
+- **Swagger** - Documentação da API
+- **@nestjs/schedule** - Cron jobs
 
 ### Infraestrutura
-- **Docker**: Containerização para facilitar desenvolvimento e deploy
-- **Docker Compose**: Orquestração de containers
-- **Makefile**: Automação de comandos e processos
 
-## 🏗️ Arquitetura do Sistema
+- **Docker** + **Docker Compose**
+- **Makefile** para automação
 
-O sistema é construído com uma arquitetura moderna e escalável:
-
-- **Backend**: API RESTful com NestJS, oferecendo serviços para gerenciamento de dados financeiros, autenticação e notificações
-- **Frontend**: Interface responsiva e dinâmica com NextJS/React
-- **Banco de Dados**: PostgreSQL com modelagem relacional otimizada
-- **Containerização**: Docker para padronizar ambientes de desenvolvimento e produção
-- **Segurança**: Implementação de JWT, criptografia e proteções contra ataques comuns
+---
 
 ## 🚀 Instalação e Configuração
 
-### Pré-requisitos
+### Com Docker (Recomendado)
 
-- Docker e Docker Compose
-- Node.js (versão LTS recomendada)
-- npm ou yarn
+```bash
+# Clone o repositório
+git clone https://github.com/marciliojrr/sistema-financeiro-pessoal.git
+cd sistema-financeiro-pessoal
 
-### Passos para Instalação
+# Inicie os containers
+docker-compose up -d
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/marciliojrr/sistema-financeiro-pessoal.git
-   cd sistema-financeiro-pessoal
-   ```
+# Acesse
+# Backend API: http://localhost:3001
+# Swagger Docs: http://localhost:3001/api/docs
+```
 
-2. Configuração do ambiente:
-   ```bash
-   cp .env.example .env
-   # Edite o arquivo .env com suas configurações
-   ```
+### Desenvolvimento Local
 
-3. Iniciar com Docker:
-   ```bash
-   make up
-   # ou
-   docker-compose up -d
-   ```
+```bash
+# Backend
+cd backend
+npm install
+npm run start:dev
 
-4. Acesse o sistema:
-   ```
-   Frontend: http://localhost:3000
-   Backend API: http://localhost:3001
-   ```
+# Acesse: http://localhost:3001/api/docs
+```
 
-### Execução sem Docker (Desenvolvimento)
+---
 
-Para executar o projeto em modo de desenvolvimento:
+## 📖 Documentação da API
 
-1. Backend:
-   ```bash
-   cd backend
-   npm install
-   npm run start:dev
-   ```
+A documentação interativa (Swagger) está disponível em:
 
-2. Frontend:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+```
+http://localhost:3001/api/docs
+```
 
-## 📊 Exemplos de Uso
+**Dica**: Ao autenticar no Swagger, use apenas o token JWT (sem o prefixo "Bearer").
 
-### Gerenciamento de Finanças
-- Cadastre suas categorias de receitas e despesas
-- Registre movimentações financeiras com valores, datas e categorias
-- Acompanhe seu saldo atual e projeções futuras
-
-### Controle de Cartões
-- Cadastre seus cartões de crédito
-- Registre compras parceladas e acompanhe o status de cada parcela
-- Gerencie o fechamento e pagamento de faturas
-
-### Planejamento Financeiro
-- Defina metas para suas reservas financeiras
-- Compare gastos planejados com realizados
-- Utilize simulações para planejar grandes decisões financeiras
+---
 
 ## 📋 Roadmap
 
-O desenvolvimento segue um planejamento em fases:
+### ✅ Fase 1: Backend (CONCLUÍDO)
 
-### MVP (Versão Atual)
-- Funções básicas de cadastro e autenticação
-- Lançamento de receitas e despesas
-- Gerenciamento básico de cartões
-- Dashboard inicial
+- [x] CRUD de todas as entidades
+- [x] Cartões de crédito com parcelamento
+- [x] Dívidas com juros
+- [x] Reservas com metas e auto-save
+- [x] Dashboard e relatórios
+- [x] Modo simulação
+- [x] Importação OFX/CSV
+- [x] Open Banking (estrutura)
+- [x] Notificações automáticas
+- [x] Roles de perfil
 
-### Versão 2.0
-- Reservas financeiras avançadas
-- Sistema de notificações
-- Gerenciamento de dívidas
-- Planejamento orçamentário
+### 🔄 Fase 2: Frontend (EM BREVE)
 
-### Versão 3.0
-- Importação/exportação de dados
-- Suporte a múltiplos perfis
-- Simulação financeira avançada
-- Integração com Open Banking
+- [ ] Interface de autenticação
+- [ ] Dashboard principal
+- [ ] Formulários de movimentações
+- [ ] Visualização de cartões e faturas
+- [ ] Gráficos e relatórios visuais
 
-### Padrões de Código
-- Siga as convenções de nomenclatura do projeto
-- Escreva testes para novas funcionalidades
-- Mantenha a documentação atualizada
+### 📱 Fase 3: Melhorias Futuras
 
-### API e Documentação
-- A documentação da API está disponível através do Swagger
-- Acesse: `http://localhost:3001/api/docs` quando o servidor estiver em execução
-- **Importante**: Ao autenticar-se no Swagger, utilize apenas o token obtido após o login, sem incluir o prefixo "Bearer"
+- [ ] Notificações via e-mail
+- [ ] Backup automático
+- [ ] Exportação PDF
+- [ ] App mobile
+
+---
 
 ## 📞 Contato
 
-Para questões, sugestões ou problemas, entre em contato:
 - **GitHub**: [marciliojrr](https://github.com/marciliojrr)
 
 ---
