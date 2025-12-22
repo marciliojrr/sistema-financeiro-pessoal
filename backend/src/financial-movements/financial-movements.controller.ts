@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Get, Query, Param, Delete, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Query, Param, Delete, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FinancialMovementsService } from './financial-movements.service';
 import { CreateFinancialMovementDto } from './dto/create-financial-movement.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UpdateFinancialMovementDto } from './dto/update-financial-movement.dto';
 
 @ApiTags('financial-movements')
 @ApiBearerAuth('access-token')
@@ -29,5 +30,10 @@ export class FinancialMovementsController {
     @Delete(':id')
     remove(@Req() req, @Param('id') id: string) {
         return this.movementService.remove(id, req.user.userId);
+    }
+
+    @Patch(':id')
+    update(@Param('id') id: string, @Body() updateDto: UpdateFinancialMovementDto, @Req() req) {
+        return this.movementService.update(id, updateDto, req.user.userId);
     }
 }
