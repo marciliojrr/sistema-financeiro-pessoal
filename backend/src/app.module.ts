@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { getDatabaseConfig } from './config/database.config';
 import { User } from './database/entities/user.entity';
 import { Profile } from './database/entities/profile.entity';
@@ -16,14 +17,24 @@ import { AuthModule } from './auth/auth.module';
 import { FinancialMovementsModule } from './financial-movements/financial-movements.module';
 import { FinancialMovement } from './database/entities/financial-movement.entity';
 import { CreditCardsModule } from './credit-cards/credit-cards.module';
-
+import { BudgetsModule } from './budgets/budgets.module';
+import { DebtsModule } from './debts/debts.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ReservesModule } from './reserves/reserves.module';
+import { ReportsModule } from './reports/reports.module';
+import { RecurringTransactionsModule } from './recurring-transactions/recurring-transactions.module';
+import { RecurringTransaction } from './database/entities/recurring-transaction.entity';
+import { ScenariosModule } from './scenarios/scenarios.module';
+import { ImportsModule } from './imports/imports.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
     // Configuração global de environment variables
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.development', '.env'],
+      envFilePath: ['.env.test', '.env.development', '.env'],
     }),
 
     // Configuração do banco de dados
@@ -38,7 +49,8 @@ import { CreditCardsModule } from './credit-cards/credit-cards.module';
       User,
       Profile,
       FinancialCategory,
-      FinancialMovement
+      FinancialMovement,
+      RecurringTransaction,
     ]),
 
     // Módulo de saúde da aplicação
@@ -53,9 +65,21 @@ import { CreditCardsModule } from './credit-cards/credit-cards.module';
     AuthModule,
 
     FinancialMovementsModule,
+    CreditCardsModule,
+    BudgetsModule,
+    DebtsModule,
+    NotificationsModule,
+    ReservesModule,
+    ReportsModule,
+    RecurringTransactionsModule,
+    ScenariosModule,
+    ImportsModule,
+    ImportsModule,
+    AuditLogsModule,
+    DashboardModule,
 
-    CreditCardsModule
-
+    // Agendamento de Tarefas (Cron)
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

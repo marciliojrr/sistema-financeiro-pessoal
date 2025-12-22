@@ -5,13 +5,19 @@ import { FinancialMovementsController } from './financial-movements.controller';
 import { FinancialMovement } from '../database/entities/financial-movement.entity';
 import { Profile } from '../database/entities/profile.entity';
 import { FinancialCategory } from '../database/entities/financial-category.entity';
+import { BudgetsModule } from '../budgets/budgets.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { DebtsModule } from '../debts/debts.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FinancialMovement, Profile, FinancialCategory])
+    TypeOrmModule.forFeature([FinancialMovement, Profile, FinancialCategory]),
+    BudgetsModule,
+    NotificationsModule,
+    DebtsModule,
   ],
   providers: [FinancialMovementsService],
   controllers: [FinancialMovementsController],
-  exports: [FinancialMovementsService]
+  exports: [FinancialMovementsService],
 })
 export class FinancialMovementsModule {}

@@ -19,9 +19,11 @@ export class InstallmentItem {
   @Column({ default: false })
   paid: boolean; // Se a parcela foi paga
 
-  @ManyToOne(() => InstallmentPurchase, purchase => purchase.installmentItems)
+  @ManyToOne(() => InstallmentPurchase, (purchase) => purchase.installmentItems)
   installmentPurchase: InstallmentPurchase;
 
-  @ManyToOne(() => CreditCardInvoice, invoice => invoice.installmentItems, { nullable: true })
+  @ManyToOne(() => CreditCardInvoice, (invoice) => invoice.installmentItems, {
+    nullable: true,
+  })
   creditCardInvoice: CreditCardInvoice;
 }

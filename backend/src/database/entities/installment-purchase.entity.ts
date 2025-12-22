@@ -1,6 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  DeleteDateColumn,
+} from 'typeorm';
 import { CreditCard } from './credit-card.entity';
 import { InstallmentItem } from './installment-item.entity';
+import { FinancialCategory } from './financial-category.entity';
 
 @Entity('installment_purchases')
 export class InstallmentPurchase {
@@ -19,10 +27,16 @@ export class InstallmentPurchase {
   @Column({ type: 'date' })
   purchaseDate: Date;
 
-  @ManyToOne(() => CreditCard, creditCard => creditCard.purchases)
+  @ManyToOne(() => CreditCard, (creditCard) => creditCard.purchases)
   creditCard: CreditCard;
 
+  @ManyToOne(() => FinancialCategory, { nullable: true })
+  category: FinancialCategory;
+
   // MUDANÇA: Relacionamento com as parcelas individuais
-  @OneToMany(() => InstallmentItem, item => item.installmentPurchase)
+  @OneToMany(() => InstallmentItem, (item) => item.installmentPurchase)
   installmentItems: InstallmentItem[];
+
+  @Column({ nullable: true, type: 'timestamp' })
+  deletedAt?: Date;
 }

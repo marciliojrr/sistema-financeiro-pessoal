@@ -8,19 +8,26 @@ import { CreditCardController } from './credit-cards.controller';
 import { InstallmentItem } from 'src/database/entities/installment-item.entity';
 import { Profile } from 'src/database/entities/profile.entity';
 import { FinancialMovement } from 'src/database/entities/financial-movement.entity';
+import { FinancialMovementsModule } from '../financial-movements/financial-movements.module';
+import { BudgetsModule } from '../budgets/budgets.module';
+import { FinancialCategory } from 'src/database/entities/financial-category.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([
-        CreditCard, 
-        InstallmentPurchase, 
-        CreditCardInvoice,
-        InstallmentItem,
-        FinancialMovement,
-        Profile
-    ])],
-    providers: [CreditCardsService],
-    controllers: [CreditCardController],
-    exports: [CreditCardsService]
-}) 
-
+  imports: [
+    TypeOrmModule.forFeature([
+      CreditCard,
+      InstallmentPurchase,
+      CreditCardInvoice,
+      InstallmentItem,
+      FinancialMovement,
+      Profile,
+      FinancialCategory,
+    ]),
+    FinancialMovementsModule,
+    BudgetsModule,
+  ],
+  providers: [CreditCardsService],
+  controllers: [CreditCardController],
+  exports: [CreditCardsService],
+})
 export class CreditCardsModule {}

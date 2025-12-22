@@ -12,9 +12,7 @@ import { ApiTags } from '@nestjs/swagger';
 @UseGuards(JwtAuthGuard)
 @Controller('health')
 export class HealthController {
-  constructor(
-    @InjectConnection() private readonly connection: Connection,
-  ) {}
+  constructor(@InjectConnection() private readonly connection: Connection) {}
 
   @Public()
   @Get()
@@ -34,7 +32,7 @@ export class HealthController {
       service: 'Sistema Financeiro Backend',
       version: '1.0.0',
       environment: process.env.NODE_ENV || 'development',
-      database: databaseStatus
+      database: databaseStatus,
     };
   }
 
@@ -45,7 +43,9 @@ export class HealthController {
     let databaseInfo = {};
 
     try {
-      const result = await this.connection.query('SELECT version() as version, now() as current_time');
+      const result = await this.connection.query(
+        'SELECT version() as version, now() as current_time',
+      );
       databaseStatus = 'Connected';
       databaseInfo = result[0];
     } catch (error) {
@@ -65,8 +65,8 @@ export class HealthController {
       nodeVersion: process.version,
       database: {
         status: databaseStatus,
-        ...databaseInfo
-      }
+        ...databaseInfo,
+      },
     };
   }
 }

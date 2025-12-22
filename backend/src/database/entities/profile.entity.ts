@@ -1,29 +1,59 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  DeleteDateColumn,
+} from 'typeorm';
 import { User } from './user.entity';
+import { Budget } from './budget.entity';
 import { FinancialCategory } from './financial-category.entity';
 import { FinancialMovement } from './financial-movement.entity';
 import { CreditCard } from './credit-card.entity';
+import { Debt } from './debt.entity';
+import { Notification } from './notification.entity';
+import { Reserve } from './reserve.entity';
+import { FinancialScenario } from './financial-scenario.entity';
 
 @Entity()
 export class Profile {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column({ unique: true })
-    active: boolean;
+  @Column({ unique: true })
+  active: boolean;
 
-    @ManyToOne(() => User, (user) => user.profiles)
-    user: User;
+  @ManyToOne(() => User, (user) => user.profiles, { onDelete: 'CASCADE' })
+  user: User;
 
-    @OneToMany(() => FinancialCategory, (category) => category.profile)
-    categories: FinancialCategory[];
+  @OneToMany(() => FinancialCategory, (category) => category.profile)
+  categories: FinancialCategory[];
 
-    @OneToMany(() => FinancialMovement, movement => movement.profile)
-    financialMovements: FinancialMovement[];
+  @OneToMany(() => FinancialMovement, (movement) => movement.profile)
+  financialMovements: FinancialMovement[];
 
-    @OneToMany(() => CreditCard, creditCard => creditCard.profile)
-    creditCards: CreditCard[];
+  @OneToMany(() => CreditCard, (creditCard) => creditCard.profile)
+  creditCards: CreditCard[];
+
+  @OneToMany(() => Budget, (budget) => budget.profile)
+  budgets: Budget[];
+
+  @OneToMany(() => Debt, (debt) => debt.profile)
+  debts: Debt[];
+
+  @OneToMany(() => Notification, (notification) => notification.profile)
+  notifications: Notification[];
+
+  @OneToMany(() => Reserve, (reserve) => reserve.profile)
+  reserves: Reserve[];
+
+  @OneToMany(() => FinancialScenario, (scenario) => scenario.profile)
+  scenarios: FinancialScenario[];
+
+  @Column({ nullable: true, type: 'timestamp' })
+  deletedAt?: Date;
 }

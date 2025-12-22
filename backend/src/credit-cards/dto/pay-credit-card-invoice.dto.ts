@@ -1,11 +1,20 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsUUID } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID, IsOptional } from 'class-validator';
 
 export class PayCreditCardInvoiceDto {
-    @ApiProperty({
-        description: "ID do perfil do usuário",
-        example: "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
-    })
-    @IsUUID()
-    profileId: string;
+  @ApiProperty({
+    description: 'ID do perfil do usuário',
+    example: 'a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6',
+  })
+  @IsUUID()
+  profileId: string;
+
+  @ApiProperty({
+    description: 'ID da categoria para o lançamento de despesa (opcional)',
+    example: 'a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6',
+    required: false,
+  })
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
 }

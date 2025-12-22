@@ -13,11 +13,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
 
   // Validação global
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // CORS
   app.enableCors({
@@ -25,27 +27,25 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Documentação Swagger
-  if (process.env.NODE_ENV === 'development') {
-    const config = new DocumentBuilder()
-      .setTitle('Sistema Financeiro Pessoal API')
-      .setDescription('API para controle financeiro pessoal')
-      .setVersion('1.0')
-      .addBearerAuth(
-        {
-          description: 'JWT Authorization header using the Bearer scheme.',
-          name: 'Authorization',
-          bearerFormat: 'Bearer',
-          scheme: 'bearer',
-          type: 'http',
-          in: 'Header'
-        },
-        'access-token',
-      )
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-  }
+  // Documentação Swagger (Always enabled for now)
+  const config = new DocumentBuilder()
+    .setTitle('Sistema Financeiro Pessoal API')
+    .setDescription('API para controle financeiro pessoal')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        description: 'JWT Authorization header using the Bearer scheme.',
+        name: 'Authorization',
+        bearerFormat: 'Bearer',
+        scheme: 'bearer',
+        type: 'http',
+        in: 'Header',
+      },
+      'access-token',
+    )
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

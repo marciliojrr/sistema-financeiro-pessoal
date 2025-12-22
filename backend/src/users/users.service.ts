@@ -7,28 +7,31 @@ import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UsersService {
-    constructor(
-        @InjectRepository(User)
-        private readonly usersRepository: Repository<User>,
-        private readonly authService: AuthService,
-    ) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+    private readonly authService: AuthService,
+  ) {}
 
-    async create(data: CreateUserDto) {
-        const hashedPassword = await this.authService.hashPassword(data.password);
-        const user = this.usersRepository.create({ ...data, password: hashedPassword });
-        return this.usersRepository.save(user);
-    }
+  async create(data: CreateUserDto) {
+    const hashedPassword = await this.authService.hashPassword(data.password);
+    const user = this.usersRepository.create({
+      ...data,
+      password: hashedPassword,
+    });
+    return this.usersRepository.save(user);
+  }
 
-    findAll() {
-        return this.usersRepository.find();
-    }
+  findAll() {
+    return this.usersRepository.find();
+  }
 
-    findOne(id: string) {
-        return this.usersRepository.findOne({ where: { id } });
-    }
+  findOne(id: string) {
+    return this.usersRepository.findOne({ where: { id } });
+  }
 
-    async remove(id: string) {
-        await this.usersRepository.delete(id);
-        return { deleted: true };
-    }
+  async remove(id: string) {
+    await this.usersRepository.delete(id);
+    return { deleted: true };
+  }
 }

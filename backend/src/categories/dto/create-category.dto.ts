@@ -1,13 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateCategoryDto {
-  @ApiProperty({ example: 'Despesa Fixa', description: 'Nome da categoria financeira' })
+  @ApiProperty({
+    example: 'Despesa Fixa',
+    description: 'Nome da categoria financeira',
+  })
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'despesa fixa', description: 'Tipo da categoria: despesa fixa, variável, etc.' })
+  @ApiProperty({
+    example: 'despesa fixa',
+    description: 'Tipo da categoria: despesa fixa, variável, etc.',
+  })
   @IsNotEmpty()
   @IsString()
   type: string;
@@ -17,8 +29,19 @@ export class CreateCategoryDto {
   @IsBoolean()
   active?: boolean = true;
 
-  @ApiProperty({ example: 'uuid-do-perfil', description: 'ID do perfil financeiro' })
+  @ApiProperty({
+    example: 'uuid-do-perfil',
+    description: 'ID do perfil financeiro',
+  })
   @IsNotEmpty()
   @IsString()
   profileId: string;
+  @ApiProperty({
+    description: 'Indica se a categoria é para despesas/receitas fixas',
+    required: false,
+    default: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isFixed?: boolean;
 }
