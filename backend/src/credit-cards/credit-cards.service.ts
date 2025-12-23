@@ -18,6 +18,7 @@ import { MovementType } from 'src/database/entities/financial-movement.entity';
 import { FinancialMovementsService } from '../financial-movements/financial-movements.service';
 import { BudgetsService } from '../budgets/budgets.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class CreditCardsService {
@@ -157,16 +158,45 @@ export class CreditCardsService {
     );
 
     // NOVA FUNCIONALIDADE: Gerar parcelas automaticamente
-    const installmentValue = dto.totalValue / dto.installments;
+    const totalValue = new Decimal(dto.totalValue);
+    const installments = new Decimal(dto.installments);
+    const installmentValue = totalValue.div(installments).toDecimalPlaces(2); // Round to 2 decimal places? adjusting last one?
+    // Be careful with rounding diffs. Better: distribute diff to first/last or simple standard division.
+    // For now, let's stick to standard division but using Decimal for precision before rounding.
+    // If strict financial:
+    // const baseValue = totalValue.div(installments).floor().toNumber();... etc.
+    // Let's keep it simple but precise:
+    
+    // Simple approach:
+    const val = totalValue.div(installments).toNumber(); 
+    // Wait, if 100 / 3 = 33.3333...
+    // We should probably explicitly round or handle remains.
+    // Let's assume standard behavior for now:
+    const installmentValueNumber = Number(val.toFixed(2)); 
+    // This might lose cents. 33.33 * 3 = 99.99.
+    // Correct way is to check diff on last installment.
+
+    // Let's implement the 'last installment adjustment' logic for perfect precision
+    let remainingAmount = totalValue;
+    
     const purchaseDate = new Date(dto.purchaseDate);
 
     for (let i = 1; i <= dto.installments; i++) {
+      let amount = installmentValueNumber;
+      
+      if (i === dto.installments) {
+        // Last installment gets the difference
+        // Sum of previous (i-1) * amount
+        const previousTotal = new Decimal(installmentValueNumber).mul(dto.installments - 1);
+        amount = totalValue.minus(previousTotal).toNumber();
+      }
+
       const dueDate = new Date(purchaseDate);
       dueDate.setMonth(purchaseDate.getMonth() + i - 1);
 
       await this.installmentItemRepository.save({
         installmentNumber: i,
-        amount: installmentValue,
+        amount: amount,
         dueDate,
         paid: false,
         installmentPurchase: savedPurchase,
@@ -243,12 +273,14 @@ export class CreditCardsService {
       throw new NotFoundException('Nenhuma parcela encontrada para o período.');
 
     // Cria a fatura
+    const totalAmount = installmentItems.reduce(
+        (total, item) => total.plus(item.amount),
+        new Decimal(0),
+      ).toNumber();
+
     const invoice = this.invoiceRepository.create({
       month: `${year}-${month.toString().padStart(2, '0')}`,
-      totalAmount: installmentItems.reduce(
-        (total, item) => total + Number(item.amount),
-        0,
-      ),
+      totalAmount,
       paid: false,
       creditCard: card,
     });

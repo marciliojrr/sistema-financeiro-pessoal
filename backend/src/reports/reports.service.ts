@@ -10,6 +10,7 @@ import { Reserve } from '../database/entities/reserve.entity';
 import { Parser } from 'json2csv';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RecurringTransactionsService } from '../recurring-transactions/recurring-transactions.service';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class ReportsService {
@@ -48,14 +49,19 @@ export class ReportsService {
     }
 
     const movements = await query.getMany();
-
+    
+    // Using Decimal for precise accumulation
     const totalIncome = movements
       .filter((m) => m.type === MovementType.INCOME)
-      .reduce((acc, m) => acc + Number(m.amount), 0);
+      .reduce((acc, m) => acc.plus(m.amount), new Decimal(0))
+      .toNumber();
+
     const totalExpense = movements
       .filter((m) => m.type === MovementType.EXPENSE)
-      .reduce((acc, m) => acc + Number(m.amount), 0);
-    const balance = totalIncome - totalExpense;
+      .reduce((acc, m) => acc.plus(m.amount), new Decimal(0))
+      .toNumber();
+
+    const balance = new Decimal(totalIncome).minus(totalExpense).toNumber();
 
     return {
       month,
@@ -98,16 +104,16 @@ export class ReportsService {
 
     const movements = await query.getMany();
 
-    const categoryMap = new Map<string, number>();
+    const categoryMap = new Map<string, Decimal>();
     movements.forEach((m) => {
       const categoryName = m.category ? m.category.name : 'Sem Categoria';
-      const current = categoryMap.get(categoryName) || 0;
-      categoryMap.set(categoryName, current + Number(m.amount));
+      const current = categoryMap.get(categoryName) || new Decimal(0);
+      categoryMap.set(categoryName, current.plus(m.amount));
     });
 
     return Array.from(categoryMap.entries()).map(([category, amount]) => ({
       category,
-      amount,
+      amount: amount.toNumber(),
     }));
   }
 
@@ -145,14 +151,18 @@ export class ReportsService {
 
       const actual = b.category
         ? expenses.find((e) => e.category === b.category.name)?.amount || 0
-        : expenses.reduce((sum, e) => sum + e.amount, 0); // If general budget (no category), assume it covers all expenses? Or handle differently. For now assuming general = total.
+        : expenses.reduce((sum, e) => sum + e.amount, 0); // Still standard JS addition for already-processed numbers (safe enough for display? or convert back?)
+        // Let's rely on standard add for already toNumber() results for now as getExpenses returns numbers.
 
+      const budgetAmount = new Decimal(b.amount);
+      const actualAmount = new Decimal(actual);
+      
       return {
         budget: b.amount,
         category: categoryName,
         actual,
-        remaining: Number(b.amount) - actual,
-        alertThreshold: Number(b.amount) * 0.9, // Virtual threshold, e.g. 90%
+        remaining: budgetAmount.minus(actualAmount).toNumber(),
+        alertThreshold: budgetAmount.mul(0.9).toNumber(),
       };
     });
 
@@ -172,16 +182,21 @@ export class ReportsService {
 
     const reserves = await query.getMany();
 
-    return reserves.map((r) => ({
-      name: r.name,
-      current: Number(r.currentAmount),
-      target: Number(r.targetAmount),
-      percentage:
-        r.targetAmount > 0
-          ? (Number(r.currentAmount) / Number(r.targetAmount)) * 100
-          : 0,
-      targetDate: r.targetDate,
-    }));
+    return reserves.map((r) => {
+       const current = new Decimal(r.currentAmount);
+       const target = new Decimal(r.targetAmount);
+       
+       return {
+        name: r.name,
+        current: current.toNumber(),
+        target: target.toNumber(),
+        percentage:
+          r.targetAmount > 0
+            ? current.div(target).mul(100).toNumber()
+            : 0,
+        targetDate: r.targetDate,
+      };
+    });
   }
 
   async exportData(userId: string, profileId?: string) {
@@ -204,7 +219,7 @@ export class ReportsService {
       Type: m.type,
       Category: m.category?.name || 'N/A',
       Description: m.description,
-      Amount: m.amount,
+      Amount: Number(m.amount), // Ensure number export
       Fixed: m.category?.isFixed ? 'Yes' : 'No',
     }));
 

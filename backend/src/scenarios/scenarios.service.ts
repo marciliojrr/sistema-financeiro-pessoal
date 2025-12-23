@@ -10,6 +10,7 @@ import { CreateScenarioDto } from './dto/create-scenario.dto';
 import { Profile } from '../database/entities/profile.entity';
 import { FinancialMovement } from '../database/entities/financial-movement.entity';
 import { RecurringTransaction } from '../database/entities/recurring-transaction.entity';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class ScenariosService {
@@ -214,18 +215,18 @@ export class ScenariosService {
     const result = await qb.getRawMany();
     // result example: [ { type: 'INCOME', total: '1000' }, { type: 'EXPENSE', total: '500' } ]
 
-    let income = 0;
-    let expense = 0;
+    let income = new Decimal(0);
+    let expense = new Decimal(0);
 
     result.forEach((r) => {
-      if (r.type === 'INCOME') income = Number(r.total);
-      if (r.type === 'EXPENSE') expense = Number(r.total);
+      if (r.type === 'INCOME') income = income.plus(r.total || 0);
+      if (r.type === 'EXPENSE') expense = expense.plus(r.total || 0);
     });
 
     return {
-      income,
-      expense,
-      balance: income - expense,
+      income: income.toNumber(),
+      expense: expense.toNumber(),
+      balance: income.minus(expense).toNumber(),
     };
   }
 }

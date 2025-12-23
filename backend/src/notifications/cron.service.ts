@@ -11,6 +11,7 @@ import {
 import { Reserve } from '../database/entities/reserve.entity';
 import { Debt } from '../database/entities/debt.entity';
 import { startOfMonth, endOfMonth, addDays, getDate } from 'date-fns';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class CronService {
@@ -51,8 +52,8 @@ export class CronService {
         .andWhere('m.type = :type', { type: MovementType.EXPENSE })
         .getRawOne();
 
-      const total = Number(expenses.total || 0);
-      const percentage = (total / budget.amount) * 100;
+      const total = new Decimal(expenses.total || 0);
+      const percentage = total.div(budget.amount).mul(100).toNumber();
 
       if (percentage >= 90) {
         // Create notification if not already created today (simplified check)
@@ -94,8 +95,10 @@ export class CronService {
       await this.movementRepo.save(movement);
 
       // 2. Update Reserve Balance
-      reserve.currentAmount =
-        Number(reserve.currentAmount) + Number(reserve.autoSaveAmount);
+      const currentAmount = new Decimal(reserve.currentAmount);
+      const autoSaveAmount = new Decimal(reserve.autoSaveAmount);
+      
+      reserve.currentAmount = currentAmount.plus(autoSaveAmount).toNumber();
       await this.reserveRepo.save(reserve);
 
       await this.createNotification(
@@ -138,7 +141,7 @@ export class CronService {
     });
 
     for (const debt of debts) {
-      if (Number(debt.remainingAmount) > 0) {
+      if (new Decimal(debt.remainingAmount).greaterThan(0)) {
         await this.createNotification(
           debt.profile.id,
           'BILL_REMINDER',
