@@ -49,7 +49,7 @@ export class ReportsService {
     }
 
     const movements = await query.getMany();
-    
+
     // Using Decimal for precise accumulation
     const totalIncome = movements
       .filter((m) => m.type === MovementType.INCOME)
@@ -98,23 +98,21 @@ export class ReportsService {
       query.andWhere('profile.id = :profileId', { profileId });
     }
 
-    if (isFixed !== undefined) {
-      query.andWhere('category.isFixed = :isFixed', { isFixed });
-    }
-
     const movements = await query.getMany();
 
-    const categoryMap = new Map<string, Decimal>();
+    const categoryMap = new Map();
     movements.forEach((m) => {
       const categoryName = m.category ? m.category.name : 'Sem Categoria';
       const current = categoryMap.get(categoryName) || new Decimal(0);
       categoryMap.set(categoryName, current.plus(m.amount));
     });
 
-    return Array.from(categoryMap.entries()).map(([category, amount]) => ({
-      category,
-      amount: amount.toNumber(),
-    }));
+    return Array.from(categoryMap.entries()).map(
+      ([category, amount]: [string, any]) => ({
+        category,
+        amount: amount.toNumber(),
+      }),
+    );
   }
 
   async getBudgetPlanning(
@@ -149,20 +147,20 @@ export class ReportsService {
     const report = budgets.map((b) => {
       const categoryName = b.category ? b.category.name : 'Geral';
 
-      const actual = b.category
+      const actual: number = b.category
         ? expenses.find((e) => e.category === b.category.name)?.amount || 0
         : expenses.reduce((sum, e) => sum + e.amount, 0); // Still standard JS addition for already-processed numbers (safe enough for display? or convert back?)
-        // Let's rely on standard add for already toNumber() results for now as getExpenses returns numbers.
+      // Let's rely on standard add for already toNumber() results for now as getExpenses returns numbers.
 
       const budgetAmount = new Decimal(b.amount);
       const actualAmount = new Decimal(actual);
-      
+
       return {
         budget: b.amount,
         category: categoryName,
         actual,
         remaining: budgetAmount.minus(actualAmount).toNumber(),
-        alertThreshold: budgetAmount.mul(0.9).toNumber(),
+        alertThreshold: budgetAmount.times(0.9).toNumber(),
       };
     });
 
@@ -183,17 +181,15 @@ export class ReportsService {
     const reserves = await query.getMany();
 
     return reserves.map((r) => {
-       const current = new Decimal(r.currentAmount);
-       const target = new Decimal(r.targetAmount);
-       
-       return {
+      const current = new Decimal(r.currentAmount);
+      const target = new Decimal(r.targetAmount);
+
+      return {
         name: r.name,
         current: current.toNumber(),
         target: target.toNumber(),
         percentage:
-          r.targetAmount > 0
-            ? current.div(target).mul(100).toNumber()
-            : 0,
+          r.targetAmount > 0 ? current.div(target).times(100).toNumber() : 0,
         targetDate: r.targetDate,
       };
     });

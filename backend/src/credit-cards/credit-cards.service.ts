@@ -166,28 +166,30 @@ export class CreditCardsService {
     // If strict financial:
     // const baseValue = totalValue.div(installments).floor().toNumber();... etc.
     // Let's keep it simple but precise:
-    
+
     // Simple approach:
-    const val = totalValue.div(installments).toNumber(); 
+    const val = totalValue.div(installments).toNumber();
     // Wait, if 100 / 3 = 33.3333...
     // We should probably explicitly round or handle remains.
     // Let's assume standard behavior for now:
-    const installmentValueNumber = Number(val.toFixed(2)); 
+    const installmentValueNumber = Number(val.toFixed(2));
     // This might lose cents. 33.33 * 3 = 99.99.
     // Correct way is to check diff on last installment.
 
     // Let's implement the 'last installment adjustment' logic for perfect precision
-    let remainingAmount = totalValue;
-    
+    const remainingAmount = totalValue;
+
     const purchaseDate = new Date(dto.purchaseDate);
 
     for (let i = 1; i <= dto.installments; i++) {
       let amount = installmentValueNumber;
-      
+
       if (i === dto.installments) {
         // Last installment gets the difference
         // Sum of previous (i-1) * amount
-        const previousTotal = new Decimal(installmentValueNumber).mul(dto.installments - 1);
+        const previousTotal = new Decimal(installmentValueNumber).times(
+          dto.installments - 1,
+        );
         amount = totalValue.minus(previousTotal).toNumber();
       }
 
@@ -273,10 +275,9 @@ export class CreditCardsService {
       throw new NotFoundException('Nenhuma parcela encontrada para o período.');
 
     // Cria a fatura
-    const totalAmount = installmentItems.reduce(
-        (total, item) => total.plus(item.amount),
-        new Decimal(0),
-      ).toNumber();
+    const totalAmount = installmentItems
+      .reduce((total, item) => total.plus(item.amount), new Decimal(0))
+      .toNumber();
 
     const invoice = this.invoiceRepository.create({
       month: `${year}-${month.toString().padStart(2, '0')}`,

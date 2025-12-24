@@ -74,7 +74,6 @@ import { DashboardModule } from './dashboard/dashboard.module';
     RecurringTransactionsModule,
     ScenariosModule,
     ImportsModule,
-    ImportsModule,
     AuditLogsModule,
     DashboardModule,
 

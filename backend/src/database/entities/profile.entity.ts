@@ -16,9 +16,9 @@ import { Reserve } from './reserve.entity';
 import { FinancialScenario } from './financial-scenario.entity';
 
 export enum ProfileRole {
-  ADMIN = 'admin',      // Controle total: criar, editar, excluir
-  EDITOR = 'editor',    // Pode editar mas não excluir
-  VIEWER = 'viewer',    // Apenas visualização
+  ADMIN = 'admin', // Controle total: criar, editar, excluir
+  EDITOR = 'editor', // Pode editar mas não excluir
+  VIEWER = 'viewer', // Apenas visualização
 }
 
 @Entity()

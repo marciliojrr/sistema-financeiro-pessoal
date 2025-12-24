@@ -39,24 +39,29 @@ export class FinancialMovementsService {
       relations: ['user'],
     });
 
-    if (!profile) throw new NotFoundException('Perfil não encontrado.');
+    if (!profile) {
+      throw new NotFoundException('Perfil não encontrado.');
+    }
 
     if (profile.user.id !== userId)
       throw new ForbiddenException(
         'Acesso negado. Você só pode adicionar movimentações em seus próprios perfis.',
       );
 
-    // Categoria precisa existir
-    const category = await this.categoryRepository.findOne({
-      where: { id: data.categoryId },
-    });
+    // Categoria (opcional)
+    let category: FinancialCategory | null = null;
+    if (data.categoryId) {
+      category = await this.categoryRepository.findOne({
+        where: { id: data.categoryId },
+      });
 
-    if (!category) throw new NotFoundException('Categoria não encontrada.');
+      if (!category) throw new NotFoundException('Categoria não encontrada.');
+    }
 
     const movement = this.movementRepository.create({
       ...data,
       profile,
-      category,
+      category: category as any, // TypeORM handles null if nullable: true
       date: new Date(data.date),
     });
     const savedMovement = await this.movementRepository.save(movement);
@@ -69,13 +74,15 @@ export class FinancialMovementsService {
       savedMovement,
     );
 
-    // Check Budget Overflow (Competence View)
-    await this.budgetsService.checkBudgetOverflow(
-      profile.id,
-      category.id,
-      data.amount,
-      new Date(data.date),
-    );
+    // Check Budget Overflow (Competence View) - only if category is present
+    if (category) {
+      await this.budgetsService.checkBudgetOverflow(
+        profile.id,
+        category.id,
+        data.amount,
+        new Date(data.date),
+      );
+    }
 
     // Se for pagamento de dívida, recalcula o saldo devedor
     if (data.debtId && data.type === MovementType.EXPENSE) {
@@ -90,51 +97,41 @@ export class FinancialMovementsService {
 
   async findAll(userId: string, filters?: any) {
     // Busca todas as movimentações só dos perfis do usuário autenticado, com filtros
-    try {
-      const query = this.movementRepository
-        .createQueryBuilder('movement')
-        .leftJoinAndSelect('movement.profile', 'profile')
-        .leftJoinAndSelect('movement.category', 'category')
-        .leftJoin('profile.user', 'user')
-        .where('profile.user.id = :userId', { userId });
+    const query = this.movementRepository
+      .createQueryBuilder('movement')
+      .leftJoinAndSelect('movement.profile', 'profile')
+      .leftJoinAndSelect('movement.category', 'category')
+      .leftJoin('profile.user', 'user')
+      .where('profile.user.id = :userId', { userId });
 
-      if (filters?.profileId)
-        query.andWhere('profile.id = :profileId', {
-          profileId: filters.profileId,
-        });
-      if (filters?.categoryId)
-        query.andWhere('category.id = :categoryId', {
-          categoryId: filters.categoryId,
-        });
-      if (filters?.startDate)
-        query.andWhere('movement.date >= :startDate', {
-          startDate: filters.startDate,
-        });
-      if (filters?.endDate)
-        query.andWhere('movement.date <= :endDate', {
-          endDate: filters.endDate,
-        });
+    if (filters?.profileId)
+      query.andWhere('profile.id = :profileId', {
+        profileId: filters.profileId,
+      });
+    if (filters?.categoryId)
+      query.andWhere('category.id = :categoryId', {
+        categoryId: filters.categoryId,
+      });
+    if (filters?.startDate)
+      query.andWhere('movement.date >= :startDate', {
+        startDate: filters.startDate,
+      });
+    if (filters?.endDate)
+      query.andWhere('movement.date <= :endDate', {
+        endDate: filters.endDate,
+      });
 
-      // Se scenarioId não for passado, filtra apenas os "reais" (scenarioId IS NULL)
-      // Se scenarioId for passado, filtra por ele
-      if (filters?.scenarioId) {
-        query.andWhere('movement.scenarioId = :scenarioId', {
-          scenarioId: filters.scenarioId,
-        });
-      } else {
-        query.andWhere('movement.scenarioId IS NULL');
-      }
-
-      return query.orderBy('movement.date', 'DESC').getMany();
-    } catch (err) {
-      // Log no console tudo do erro:
-      console.error(
-        'Erro no findAll financial-movements:',
-        err.message,
-        err.stack,
-      );
-      throw err; // deixa o Nest responder o erro via ExceptionFilter, mas agora com mensagem SQL
+    // Se scenarioId não for passado, filtra apenas os "reais" (scenarioId IS NULL)
+    // Se scenarioId for passado, filtra por ele
+    if (filters?.scenarioId) {
+      query.andWhere('movement.scenarioId = :scenarioId', {
+        scenarioId: filters.scenarioId,
+      });
+    } else {
+      query.andWhere('movement.scenarioId IS NULL');
     }
+
+    return query.orderBy('movement.date', 'DESC').getMany();
   }
 
   async findOne(id: string, userId: string) {

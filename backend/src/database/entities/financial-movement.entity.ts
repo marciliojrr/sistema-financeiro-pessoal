@@ -39,7 +39,13 @@ export class FinancialMovement {
   })
   profile: Profile;
 
-  @ManyToOne(() => FinancialCategory, (category) => category.financialMovements)
+  @ManyToOne(
+    () => FinancialCategory,
+    (category) => category.financialMovements,
+    {
+      nullable: true,
+    },
+  )
   category: FinancialCategory;
 
   @CreateDateColumn()

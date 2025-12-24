@@ -5,12 +5,15 @@ import { User } from '../database/entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from 'src/auth/auth.service';
 
+import { ProfilesService } from 'src/profiles/profiles.service';
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly authService: AuthService,
+    private readonly profilesService: ProfilesService,
   ) {}
 
   async create(data: CreateUserDto) {
@@ -19,7 +22,16 @@ export class UsersService {
       ...data,
       password: hashedPassword,
     });
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+
+    // Create default profile
+    await this.profilesService.createProfile({
+      name: 'Pessoal',
+      userId: savedUser.id,
+      active: true,
+    });
+
+    return savedUser;
   }
 
   findAll() {

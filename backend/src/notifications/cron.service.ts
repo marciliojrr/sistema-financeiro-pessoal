@@ -53,7 +53,7 @@ export class CronService {
         .getRawOne();
 
       const total = new Decimal(expenses.total || 0);
-      const percentage = total.div(budget.amount).mul(100).toNumber();
+      const percentage = total.div(budget.amount).times(100).toNumber();
 
       if (percentage >= 90) {
         // Create notification if not already created today (simplified check)
@@ -97,7 +97,7 @@ export class CronService {
       // 2. Update Reserve Balance
       const currentAmount = new Decimal(reserve.currentAmount);
       const autoSaveAmount = new Decimal(reserve.autoSaveAmount);
-      
+
       reserve.currentAmount = currentAmount.plus(autoSaveAmount).toNumber();
       await this.reserveRepo.save(reserve);
 
@@ -232,7 +232,7 @@ export class CronService {
     const notification = this.notificationRepo.create({
       profile: { id: profileId } as any,
       title:
-        type === 'BUDGET_ALERT' // eslint-disable-line
+        type === 'BUDGET_ALERT'
           ? 'Alerta de Orçamento'
           : type === 'AUTO_SAVE'
             ? 'Poupança Automática'

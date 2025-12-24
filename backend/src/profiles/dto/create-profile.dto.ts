@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+} from 'class-validator';
 import { ProfileRole } from '../../database/entities/profile.entity';
 
 export class CreateProfileDto {
@@ -23,7 +29,8 @@ export class CreateProfileDto {
 
   @ApiProperty({
     example: 'admin',
-    description: 'Papel do perfil: admin (controle total), editor (edita mas não exclui), viewer (só visualiza)',
+    description:
+      'Papel do perfil: admin (controle total), editor (edita mas não exclui), viewer (só visualiza)',
     enum: ProfileRole,
     default: ProfileRole.ADMIN,
   })

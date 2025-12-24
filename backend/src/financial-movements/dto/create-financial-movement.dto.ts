@@ -48,10 +48,10 @@ export class CreateFinancialMovementDto {
   @IsNotEmpty()
   profileId: string;
 
-  @ApiProperty({ example: 'uuid-da-categoria' })
+  @ApiProperty({ example: 'uuid-da-categoria', required: false })
   @IsString()
-  @IsNotEmpty()
-  categoryId: string;
+  @IsOptional()
+  categoryId?: string;
 
   @ApiProperty({
     example: 'uuid-da-divida',

@@ -23,6 +23,11 @@ import { UpdateFinancialMovementDto } from './dto/update-financial-movement.dto'
 export class FinancialMovementsController {
   constructor(private readonly movementService: FinancialMovementsService) {}
 
+  @Get('ping')
+  ping() {
+    return { message: 'pong', status: 'Controller is active' };
+  }
+
   @Post()
   create(@Req() req, @Body() dto: CreateFinancialMovementDto) {
     return this.movementService.create(dto, req.user.userId);
