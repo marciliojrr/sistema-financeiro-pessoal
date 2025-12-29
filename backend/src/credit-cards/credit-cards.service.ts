@@ -91,7 +91,7 @@ export class CreditCardsService {
   async findOne(id: string, userId: string) {
     const card = await this.creditCardRepository.findOne({
       where: { id },
-      relations: ['profile', 'profile.user'],
+      relations: ['profile', 'profile.user', 'invoices', 'purchases'],
     });
 
     if (!card) throw new NotFoundException('Cartão não encontrado.');

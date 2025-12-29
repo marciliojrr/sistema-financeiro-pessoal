@@ -22,7 +22,7 @@ export class FinancialMovement {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 20, scale: 2 })
   amount: number;
 
   @Column({ type: 'enum', enum: MovementType })

@@ -4,9 +4,18 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -18,11 +27,15 @@ import { toast } from 'sonner';
 import { categoriesService, Category } from '@/services/categoriesService';
 import { transactionsService, CreateTransactionDto, Transaction } from '@/services/transactionsService';
 import { useRouter } from 'next/navigation';
+import { CurrencyInputField } from '@/components/ui/currency-input';
+import { cn } from '@/lib/utils';
 
 const transactionSchema = z.object({
   description: z.string().min(3, 'Descrição muito curta'),
-  amount: z.string().min(1, 'Valor obrigatório'), // Handle as string for input masking later
-  date: z.string().min(1, 'Data obrigatória'),
+  amount: z.string().min(1, 'Valor obrigatório'),
+  date: z.date({
+    required_error: "Uma data é necessária.",
+  }),
   type: z.enum(['INCOME', 'EXPENSE']),
   categoryId: z.string().optional(),
   isPaid: z.boolean().default(true),
@@ -45,7 +58,7 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: initialData?.type || initialType,
-      date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      date: initialData?.date ? new Date(initialData.date) : new Date(),
       isPaid: initialData?.isPaid ?? true,
       amount: initialData?.amount ? String(initialData.amount) : '',
       description: initialData?.description || '',
@@ -80,11 +93,13 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
     }
 
     try {
+      // Remove symbols like "R$ " and convert comma to dot for parsing
+      const cleanAmount = data.amount.replace(/[^0-9,]/g, '').replace(',', '.');
       
       const payload: CreateTransactionDto = {
         description: data.description,
-        amount: parseFloat(data.amount.replace(',', '.')),
-        date: data.date,
+        amount: parseFloat(cleanAmount),
+        date: data.date.toISOString(),
         type: data.type.toLowerCase() as 'income' | 'expense',
         categoryId: data.categoryId === 'none' ? undefined : data.categoryId,
         profileId: profileId!,
@@ -98,7 +113,7 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
         toast.success('Transação salva com sucesso!');
       }
       
-      router.push('/dashboard'); // Or back to list?
+      router.push('/dashboard'); 
       router.refresh();
     } catch (error) {
       console.error('Save error:', error);
@@ -127,13 +142,12 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="amount">Valor (R$)</Label>
-        <Input 
-            id="amount" 
-            type="number" 
-            step="0.01" 
-            placeholder="0,00" 
-            {...form.register('amount')} 
+        <Label htmlFor="amount">Valor</Label>
+        <CurrencyInputField
+            id="amount"
+            value={form.getValues('amount')}
+            onValueChange={(val) => form.setValue('amount', val || '')}
+            placeholder="R$ 0,00"
         />
         {form.formState.errors.amount && (
             <p className="text-sm text-red-500">{form.formState.errors.amount.message}</p>
@@ -167,9 +181,40 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="date">Data</Label>
-        <Input type="date" id="date" {...form.register('date')} />
+      <div className="space-y-2 flex flex-col">
+        <Label>Data</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "w-full pl-3 text-left font-normal",
+                !form.watch('date') && "text-muted-foreground"
+              )}
+            >
+              {form.watch('date') ? (
+                format(form.watch('date'), "PPP", { locale: ptBR })
+              ) : (
+                <span>Selecione uma data</span>
+              )}
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={form.watch('date')}
+              onSelect={(date) => date && form.setValue('date', date)}
+              disabled={(date) =>
+                date > new Date() || date < new Date("1900-01-01")
+              }
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+        {form.formState.errors.date && (
+            <p className="text-sm text-red-500">{form.formState.errors.date.message}</p>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={loading}>
