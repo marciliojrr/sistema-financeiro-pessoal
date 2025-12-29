@@ -15,7 +15,10 @@ export class AuthService {
 
   // Valida usuário por email e senha
   async validateUser(email: string, password: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({ 
+      where: { email },
+      relations: ['profiles'] 
+    });
 
     if (!user) throw new UnauthorizedException('E-mail ou senha inválidos');
 
@@ -29,6 +32,7 @@ export class AuthService {
   // Gera e retorna um token JWT para o usuário autenticado
   async login(user: User) {
     const payload = { sub: user.id, email: user.email, name: user.name };
+    const defaultProfile = user.profiles && user.profiles.length > 0 ? user.profiles[0] : null;
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -36,6 +40,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        defaultProfileId: defaultProfile ? defaultProfile.id : null,
       },
     };
   }

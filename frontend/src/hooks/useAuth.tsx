@@ -28,10 +28,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = (token: string, userId: string, name: string) => {
+  const login = (token: string, userId: string, name: string, profileId?: string) => {
     localStorage.setItem('accessToken', token);
     localStorage.setItem('userId', userId);
     localStorage.setItem('userName', name);
+    if (profileId) {
+        localStorage.setItem('profileId', profileId);
+    }
     setUserName(name);
     setIsAuthenticated(true);
   };

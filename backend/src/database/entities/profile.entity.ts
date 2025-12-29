@@ -35,7 +35,7 @@ export class Profile {
   })
   role: ProfileRole;
 
-  @Column({ unique: true })
+  @Column()
   active: boolean;
 
   @ManyToOne(() => User, (user) => user.profiles, { onDelete: 'CASCADE' })

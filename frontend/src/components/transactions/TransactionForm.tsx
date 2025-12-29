@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { categoriesService, Category } from '@/services/categoriesService';
-import { transactionsService, CreateTransactionDto } from '@/services/transactionsService';
+import { transactionsService, CreateTransactionDto, Transaction } from '@/services/transactionsService';
 import { useRouter } from 'next/navigation';
 
 const transactionSchema = z.object({
@@ -32,9 +32,11 @@ type TransactionFormData = z.infer<typeof transactionSchema>;
 
 interface TransactionFormProps {
   initialType?: 'INCOME' | 'EXPENSE';
+  initialData?: Transaction;
+  transactionId?: string;
 }
 
-export function TransactionForm({ initialType = 'EXPENSE' }: TransactionFormProps) {
+export function TransactionForm({ initialType = 'EXPENSE', initialData, transactionId }: TransactionFormProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,10 +44,12 @@ export function TransactionForm({ initialType = 'EXPENSE' }: TransactionFormProp
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      type: initialType,
-      date: new Date().toISOString().split('T')[0],
-      isPaid: true,
-      amount: '',
+      type: initialData?.type || initialType,
+      date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      isPaid: initialData?.isPaid ?? true,
+      amount: initialData?.amount ? String(initialData.amount) : '',
+      description: initialData?.description || '',
+      categoryId: initialData?.categoryId || 'none',
     },
   });
 
@@ -86,9 +90,15 @@ export function TransactionForm({ initialType = 'EXPENSE' }: TransactionFormProp
         profileId: profileId!,
       };
 
-      await transactionsService.create(payload);
-      toast.success('Transação salva com sucesso!');
-      router.push('/dashboard');
+      if (transactionId) {
+        await transactionsService.update(transactionId, payload);
+        toast.success('Transação atualizada com sucesso!');
+      } else {
+        await transactionsService.create(payload);
+        toast.success('Transação salva com sucesso!');
+      }
+      
+      router.push('/dashboard'); // Or back to list?
       router.refresh();
     } catch (error) {
       console.error('Save error:', error);
