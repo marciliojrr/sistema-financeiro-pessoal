@@ -142,29 +142,16 @@ export default function BudgetsPage() {
 
   return (
     <MobileLayout>
-      <div className="flex flex-col gap-4 mb-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <PieChart className="h-6 w-6" />
           Planejamento
         </h1>
-        
-        {/* Month Selector */}
-        <div className="flex items-center justify-between bg-card p-2 rounded-lg border shadow-sm">
-            <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="font-semibold">{months[month-1]} {year}</span>
-            <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-                <ChevronRight className="h-4 w-4" />
-            </Button>
-        </div>
-      </div>
-
-      <div className="flex justify-end marginBottom-4">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="mb-4">
-              <Plus className="h-4 w-4 mr-2" /> Novo Orçamento
+            <Button>
+              <Plus className="h-4 w-4 mr-2" /> Novo
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -208,6 +195,17 @@ export default function BudgetsPage() {
             </form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Month Selector */}
+      <div className="flex items-center justify-between bg-card p-2 rounded-lg border shadow-sm mb-6">
+        <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="font-semibold">{months[month-1]} {year}</span>
+        <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="space-y-4 pb-20">

@@ -117,8 +117,9 @@ export default function DebtsPage() {
         </h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="icon" className="rounded-full shadow-md">
-              <Plus className="h-5 w-5" />
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova
             </Button>
           </DialogTrigger>
           <DialogContent>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, Receipt, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { transactionsService, Transaction } from '@/services/transactionsService';
@@ -158,22 +158,22 @@ export default function TransactionsPage() {
 
     return (
         <MobileLayout>
-            <Card className="mb-4">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-xl font-bold flex items-center gap-2">
-                        <Receipt className="h-5 w-5" />
-                        Transações
-                    </CardTitle>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={handleExportCSV}>
-                            <Download className="h-4 w-4" />
-                        </Button>
-                        <Button onClick={() => router.push('/transactions/new')}>
-                            <Plus className="mr-2 h-4 w-4" /> Nova
-                        </Button>
-                    </div>
-                </CardHeader>
-            </Card>
+            {/* Page Title */}
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <Receipt className="h-6 w-6" />
+                    Transações
+                </h1>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                        <Download className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={() => router.push('/transactions/new')}>
+                        <Plus className="mr-2 h-4 w-4" /> Nova
+                    </Button>
+                </div>
+            </div>
+
 
             {/* Period Filter */}
             <Card className="mb-4">
