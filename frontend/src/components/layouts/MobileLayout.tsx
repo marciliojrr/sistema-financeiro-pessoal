@@ -115,6 +115,11 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                                 🔔 Notificações
                             </Button>
                         </Link>
+                        <Link href="/import" className="w-full col-span-3">
+                            <Button variant="outline" className="w-full text-xs">
+                                📥 Importar Dados
+                            </Button>
+                        </Link>
                         <div className="col-span-3 border-t pt-4 mt-2">
                             <Button 
                                 variant="ghost" 
