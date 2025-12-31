@@ -11,6 +11,7 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerDescription,
   DrawerTrigger,
 } from "@/components/ui/drawer"
 
@@ -75,6 +76,7 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                 <DrawerContent>
                     <DrawerHeader>
                         <DrawerTitle>Ações Rápidas</DrawerTitle>
+                        <DrawerDescription className="sr-only">Selecione uma ação para realizar</DrawerDescription>
                     </DrawerHeader>
                     <div className="p-4 grid grid-cols-3 gap-4">
                         <Link href="/transactions/new?type=INCOME" className="w-full">
@@ -95,12 +97,17 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                         </Button>
                         <Link href="/categories" className="w-full col-span-3">
                             <Button variant="ghost" className="w-full text-xs">
-                                Gerenciar Categorias
+                                🏷️ Gerenciar Categorias
                             </Button>
                         </Link>
                         <Link href="/transactions" className="w-full col-span-3">
                             <Button variant="outline" className="w-full text-xs">
                                 📋 Ver Movimentações
+                            </Button>
+                        </Link>
+                        <Link href="/reserves" className="w-full col-span-3">
+                            <Button variant="outline" className="w-full text-xs">
+                                🐷 Minhas Reservas
                             </Button>
                         </Link>
                         <div className="col-span-3 border-t pt-4 mt-2">

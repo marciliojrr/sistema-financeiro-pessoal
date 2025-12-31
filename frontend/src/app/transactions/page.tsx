@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 } from '@/components/ui/table'; // Need to create this or use standard table
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Receipt } from 'lucide-react';
 import { transactionsService, Transaction } from '@/services/transactionsService';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -53,7 +53,10 @@ export default function TransactionsPage() {
         <MobileLayout>
             <Card className="mb-6">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-xl font-bold">Transações</CardTitle>
+                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                        <Receipt className="h-5 w-5" />
+                        Transações
+                    </CardTitle>
                     <Button onClick={() => router.push('/transactions/new')}>
                         <Plus className="mr-2 h-4 w-4" /> Nova
                     </Button>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, Trash, Loader2 } from 'lucide-react';
+import { Plus, Trash, Loader2, Landmark } from 'lucide-react';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -111,7 +111,10 @@ export default function DebtsPage() {
   return (
     <MobileLayout>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Gerenciar Dívidas</h1>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Landmark className="h-6 w-6" />
+          Gerenciar Dívidas
+        </h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="icon" className="rounded-full shadow-md">

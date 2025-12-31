@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, Edit2, ChevronLeft, ChevronRight, Save } from 'lucide-react';
+import { Plus, Edit2, ChevronLeft, ChevronRight, Save, PieChart } from 'lucide-react';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -143,7 +143,10 @@ export default function BudgetsPage() {
   return (
     <MobileLayout>
       <div className="flex flex-col gap-4 mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Planejamento</h1>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <PieChart className="h-6 w-6" />
+          Planejamento
+        </h1>
         
         {/* Month Selector */}
         <div className="flex items-center justify-between bg-card p-2 rounded-lg border shadow-sm">
