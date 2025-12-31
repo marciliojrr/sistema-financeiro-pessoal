@@ -1,0 +1,10 @@
+Data,Descricao,Valor,Categoria,Tipo
+05/12/2024,Salário Empresa XYZ,3500.00,Salário,Income
+10/12/2024,Aluguel Dezembro,-1200.00,Moradia,Expense
+15/12/2024,Supermercado ABC,-450.50,Alimentação,Expense
+18/12/2024,Farmácia Saúde,-89.90,Saúde,Expense
+20/12/2024,PIX Recebido João,250.00,Outros,Income
+22/12/2024,Restaurante Sabor,-150.00,Alimentação,Expense
+28/12/2024,Streaming Netflix,-79.90,Lazer,Expense
+30/12/2024,Conta de Luz,-185.00,Moradia,Expense
+31/12/2024,Uber Corridas,-67.50,Transporte,Expense

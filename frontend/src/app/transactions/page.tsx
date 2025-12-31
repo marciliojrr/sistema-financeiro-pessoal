@@ -5,23 +5,42 @@ import { useRouter } from 'next/navigation';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-} from '@/components/ui/table'; // Need to create this or use standard table
-import { Plus, Pencil, Trash2, Receipt, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Pencil, Trash2, Receipt, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { transactionsService, Transaction } from '@/services/transactionsService';
 import { toast } from 'sonner';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const MONTHS = [
+    { value: 0, label: 'Janeiro' },
+    { value: 1, label: 'Fevereiro' },
+    { value: 2, label: 'Março' },
+    { value: 3, label: 'Abril' },
+    { value: 4, label: 'Maio' },
+    { value: 5, label: 'Junho' },
+    { value: 6, label: 'Julho' },
+    { value: 7, label: 'Agosto' },
+    { value: 8, label: 'Setembro' },
+    { value: 9, label: 'Outubro' },
+    { value: 10, label: 'Novembro' },
+    { value: 11, label: 'Dezembro' },
+];
 
 export default function TransactionsPage() {
     const router = useRouter();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // Filter state
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showAllTime, setShowAllTime] = useState(false);
 
     const fetchTransactions = async () => {
         try {
             const data = await transactionsService.getAll();
-            // Filtrar para não mostrar parcelas de compras parceladas
             const filtered = data.filter(t => !t.installmentPurchaseId);
             setTransactions(filtered);
         } catch (error) {
@@ -31,6 +50,22 @@ export default function TransactionsPage() {
             setLoading(false);
         }
     };
+
+    // Filter transactions by selected period
+    useEffect(() => {
+        if (showAllTime) {
+            setFilteredTransactions(transactions);
+        } else {
+            const startDate = startOfMonth(new Date(selectedYear, selectedMonth));
+            const endDate = endOfMonth(new Date(selectedYear, selectedMonth));
+            
+            const filtered = transactions.filter(t => {
+                const date = parseISO(t.date);
+                return date >= startDate && date <= endDate;
+            });
+            setFilteredTransactions(filtered);
+        }
+    }, [transactions, selectedMonth, selectedYear, showAllTime]);
 
     useEffect(() => {
         fetchTransactions();
@@ -81,9 +116,49 @@ export default function TransactionsPage() {
         }
     };
 
+    const navigateMonth = (direction: 'prev' | 'next') => {
+        if (direction === 'prev') {
+            if (selectedMonth === 0) {
+                setSelectedMonth(11);
+                setSelectedYear(selectedYear - 1);
+            } else {
+                setSelectedMonth(selectedMonth - 1);
+            }
+        } else {
+            if (selectedMonth === 11) {
+                setSelectedMonth(0);
+                setSelectedYear(selectedYear + 1);
+            } else {
+                setSelectedMonth(selectedMonth + 1);
+            }
+        }
+        setShowAllTime(false);
+    };
+
+    // Calculate totals for filtered transactions
+    const totals = filteredTransactions.reduce(
+        (acc, t) => {
+            const amount = Number(t.amount) || 0;
+            if (t.type.toUpperCase() === 'INCOME') {
+                acc.income += amount;
+            } else {
+                acc.expense += amount;
+            }
+            return acc;
+        },
+        { income: 0, expense: 0 }
+    );
+
+    // Get available years from transactions
+    const availableYears = [...new Set(transactions.map(t => parseISO(t.date).getFullYear()))].sort((a, b) => b - a);
+    if (!availableYears.includes(selectedYear)) {
+        availableYears.push(selectedYear);
+        availableYears.sort((a, b) => b - a);
+    }
+
     return (
         <MobileLayout>
-            <Card className="mb-6">
+            <Card className="mb-4">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-xl font-bold flex items-center gap-2">
                         <Receipt className="h-5 w-5" />
@@ -98,16 +173,111 @@ export default function TransactionsPage() {
                         </Button>
                     </div>
                 </CardHeader>
+            </Card>
+
+            {/* Period Filter */}
+            <Card className="mb-4">
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => navigateMonth('prev')}
+                            disabled={showAllTime}
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        
+                        <div className="flex gap-2 flex-1 justify-center">
+                            <Select 
+                                value={showAllTime ? 'all' : String(selectedMonth)}
+                                onValueChange={(v) => {
+                                    if (v === 'all') {
+                                        setShowAllTime(true);
+                                    } else {
+                                        setShowAllTime(false);
+                                        setSelectedMonth(Number(v));
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="w-[130px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todo período</SelectItem>
+                                    {MONTHS.map(m => (
+                                        <SelectItem key={m.value} value={String(m.value)}>
+                                            {m.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            
+                            {!showAllTime && (
+                                <Select 
+                                    value={String(selectedYear)}
+                                    onValueChange={(v) => setSelectedYear(Number(v))}
+                                >
+                                    <SelectTrigger className="w-[90px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableYears.map(y => (
+                                            <SelectItem key={y} value={String(y)}>
+                                                {y}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </div>
+                        
+                        <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => navigateMonth('next')}
+                            disabled={showAllTime}
+                        >
+                            <ChevronRight className="h-5 w-5" />
+                        </Button>
+                    </div>
+
+                    {/* Period Summary */}
+                    <div className="flex justify-between mt-4 text-sm">
+                        <div className="text-center">
+                            <p className="text-muted-foreground">Receitas</p>
+                            <p className="font-bold text-green-600">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totals.income)}
+                            </p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-muted-foreground">Despesas</p>
+                            <p className="font-bold text-red-600">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totals.expense)}
+                            </p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-muted-foreground">Saldo</p>
+                            <p className={`font-bold ${totals.income - totals.expense >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totals.income - totals.expense)}
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Transactions List */}
+            <Card>
                 <CardContent className="p-0">
                     {loading ? (
                         <div className="text-center py-4">Carregando...</div>
-                    ) : transactions.length === 0 ? (
+                    ) : filteredTransactions.length === 0 ? (
                          <div className="text-center py-8 text-muted-foreground">
-                            Nenhuma transação encontrada.
+                            Nenhuma transação encontrada{!showAllTime && ` em ${MONTHS[selectedMonth].label}/${selectedYear}`}.
                         </div>
                     ) : (
                         <div className="divide-y">
-                            {transactions.map((t) => (
+                            {filteredTransactions.map((t) => (
                                 <div key={t.id} className="flex items-center justify-between p-4 hover:bg-muted/50">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
