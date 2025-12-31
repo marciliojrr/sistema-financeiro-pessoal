@@ -5,7 +5,7 @@ import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, BellOff, Check, CheckCheck, AlertCircle, Wallet, PiggyBank, Info } from 'lucide-react';
+import { Bell, BellOff, CheckCheck, AlertCircle, Wallet, PiggyBank, Info } from 'lucide-react';
 import { notificationsService, Notification } from '@/services/notificationsService';
 import { toast } from 'sonner';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -155,13 +155,21 @@ export default function NotificationsPage() {
               className={cn(
                 "border-l-4 transition-all",
                 getNotificationColor(notification.type),
-                !notification.read && "bg-primary/5"
+                !notification.read && "bg-primary/5 cursor-pointer hover:bg-primary/10",
+                notification.read && "opacity-75"
               )}
+              onClick={() => !notification.read && handleMarkAsRead(notification.id)}
             >
               <CardContent className="p-4">
                 <div className="flex gap-3">
-                  <div className="flex-shrink-0 mt-1">
-                    {getNotificationIcon(notification.type)}
+                  {/* Indicador de não lida - bolinha azul */}
+                  <div className="flex flex-col items-center gap-1">
+                    {!notification.read && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    )}
+                    <div className="mt-1">
+                      {getNotificationIcon(notification.type)}
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
@@ -172,14 +180,9 @@ export default function NotificationsPage() {
                         {notification.title}
                       </h3>
                       {!notification.read && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 flex-shrink-0"
-                          onClick={() => handleMarkAsRead(notification.id)}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          Toque para ler
+                        </span>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
