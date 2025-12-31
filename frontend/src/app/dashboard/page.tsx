@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [chartData, setChartData] = useState<{ category: string; amount: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fixedExpenses, setFixedExpenses] = useState(0);
+  const [reserves, setReserves] = useState<{ name: string; current: number; target: number; percentage: number }[]>([]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -25,13 +27,17 @@ export default function DashboardPage() {
         const month = currentDate.getMonth() + 1;
         const year = currentDate.getFullYear();
 
-        const [summary, expenses] = await Promise.all([
+        const [summary, expenses, fixed, reservesData] = await Promise.all([
            dashboardService.getSummary(),
-           dashboardService.getExpensesByCategory(month, year)
+           dashboardService.getExpensesByCategory(month, year),
+           dashboardService.getFixedExpenses(month, year),
+           dashboardService.getReservesProgress()
         ]);
         
         setData(summary);
         setChartData(expenses);
+        setFixedExpenses(fixed);
+        setReserves(reservesData);
       } catch (error) {
         console.error('Failed to fetch dashboard:', error);
         toast.error('Erro ao carregar dados do dashboard.');
@@ -101,6 +107,59 @@ export default function DashboardPage() {
 
          {/* Charts Section */}
          <ExpensesChart data={chartData} loading={loading} />
+
+         {/* Free Spend & Reserves */}
+         <div className="grid gap-4">
+            <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0">
+                <CardHeader className="p-4 pb-2">
+                    <CardTitle className="text-sm font-medium text-white/80">Disponível para Gasto Livre</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                    {loading ? <Skeleton className="h-8 w-32 bg-white/20" /> : (
+                        <div>
+                             <p className="text-2xl font-bold">
+                                {formatCurrency((data?.balance.totalIncome || 0) - (fixedExpenses || 0))}
+                            </p>
+                            <p className="text-xs text-indigo-100 mt-1 opacity-80">
+                                (Renda - Despesas Fixas)
+                            </p>
+                            <div className="mt-2 text-xs flex justify-between opacity-70">
+                                <span>Fixas: {formatCurrency(fixedExpenses)}</span>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader className="p-4 pb-2">
+                    <CardTitle className="text-sm font-medium">Minhas Reservas</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                    {loading ? <Skeleton className="h-20 w-full" /> : 
+                        reserves.length === 0 ? (
+                            <p className="text-sm text-gray-500 text-center">Nenhuma reserva criada.</p>
+                        ) : (
+                            reserves.map((reserve, idx) => (
+                                <div key={idx} className="space-y-1">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="font-medium">{reserve.name}</span>
+                                        <span className="text-muted-foreground">{formatCurrency(reserve.current)} / {formatCurrency(reserve.target)}</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-primary transition-all duration-500" 
+                                            style={{ width: `${Math.min(reserve.percentage, 100)}%` }} 
+                                        />
+                                    </div>
+                                    <p className="text-xs text-end text-muted-foreground">{reserve.percentage.toFixed(0)}%</p>
+                                </div>
+                            ))
+                        )
+                    }
+                </CardContent>
+            </Card>
+         </div>
 
          {/* Upcoming Bills or Activity */}
          <div className="space-y-2">

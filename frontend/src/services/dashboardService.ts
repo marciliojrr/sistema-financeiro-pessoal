@@ -32,4 +32,16 @@ export const dashboardService = {
     const response = await api.get<{ category: string; amount: number }[]>('/reports/expenses-by-category', { params });
     return response.data;
   },
+  getReservesProgress: async (profileId?: string): Promise<{ name: string; current: number; target: number; percentage: number }[]> => {
+    const params = profileId ? { profileId } : {};
+    const response = await api.get('/reports/reserves-progress', { params });
+    return response.data;
+  },
+
+  getFixedExpenses: async (month: number, year: number, profileId?: string): Promise<number> => {
+    const params = { month, year, isFixed: 'true', ...(profileId ? { profileId } : {}) };
+    const response = await api.get<{ amount: number }[]>('/reports/expenses-by-category', { params });
+    // Aggregation might be needed if returns array of categories
+    return response.data.reduce((acc, curr) => acc + curr.amount, 0);
+  },
 };

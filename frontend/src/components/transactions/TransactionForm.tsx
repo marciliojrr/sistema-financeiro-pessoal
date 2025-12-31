@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import { categoriesService, Category } from '@/services/categoriesService';
 import { transactionsService, CreateTransactionDto, Transaction } from '@/services/transactionsService';
+import { creditCardsService, CreditCard } from '@/services/creditCardsService';
 import { useRouter } from 'next/navigation';
 import { CurrencyInputField } from '@/components/ui/currency-input';
 import { cn } from '@/lib/utils';
@@ -52,9 +53,10 @@ interface TransactionFormProps {
 export function TransactionForm({ initialType = 'EXPENSE', initialData, transactionId }: TransactionFormProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<TransactionFormData>({
+  const form = useForm<TransactionFormData & { paymentMethod: 'CASH' | 'CREDIT_CARD', creditCardId?: string, installments?: number }>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: initialData?.type || initialType,
@@ -63,25 +65,32 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
       amount: initialData?.amount ? String(initialData.amount) : '',
       description: initialData?.description || '',
       categoryId: initialData?.categoryId || 'none',
+      paymentMethod: 'CASH',
+      installments: 1
     },
   });
 
   const type = form.watch('type');
+  const paymentMethod = form.watch('paymentMethod');
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const allCategories = await categoriesService.getAll();
-        setCategories(allCategories.filter(c => c.type === type));
-      } catch (error) {
-        console.error('Failed to load categories', error);
-        toast.error('Erro ao carregar categorias');
-      }
+    const loadData = async () => {
+        try {
+            const [allCategories, allCards] = await Promise.all([
+                categoriesService.getAll(),
+                creditCardsService.getAll()
+            ]);
+            setCategories(allCategories.filter(c => c.type === type));
+            setCreditCards(allCards);
+        } catch (error) {
+            console.error('Failed to load data', error);
+            toast.error('Erro ao carregar dados');
+        }
     };
-    fetchCategories();
+    loadData();
   }, [type]);
 
-  const onSubmit = async (data: TransactionFormData) => {
+  const onSubmit = async (data: any) => {
     setLoading(true);
     const profileId = localStorage.getItem('profileId') || localStorage.getItem('userId');
 
@@ -93,24 +102,45 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
     }
 
     try {
-      // Remove symbols like "R$ " and convert comma to dot for parsing
       const cleanAmount = data.amount.replace(/[^0-9,]/g, '').replace(',', '.');
+      const numericAmount = parseFloat(cleanAmount);
       
-      const payload: CreateTransactionDto = {
-        description: data.description,
-        amount: parseFloat(cleanAmount),
-        date: data.date.toISOString(),
-        type: data.type.toLowerCase() as 'income' | 'expense',
-        categoryId: data.categoryId === 'none' ? undefined : data.categoryId,
-        profileId: profileId!,
-      };
+      if (data.paymentMethod === 'CREDIT_CARD' && data.type === 'EXPENSE') {
+          // Credit Card Installment Purchase
+          if (!data.creditCardId) {
+              toast.error('Selecione um cartão de crédito');
+              setLoading(false);
+              return;
+          }
 
-      if (transactionId) {
-        await transactionsService.update(transactionId, payload);
-        toast.success('Transação atualizada com sucesso!');
+          await creditCardsService.createInstallmentPurchase({
+              productName: data.description,
+              totalValue: numericAmount,
+              installments: Number(data.installments || 1),
+              purchaseDate: data.date.toISOString(),
+              creditCardId: data.creditCardId,
+              categoryId: data.categoryId === 'none' ? undefined : data.categoryId
+          });
+          toast.success('Compra parcelada registrada com sucesso!');
+
       } else {
-        await transactionsService.create(payload);
-        toast.success('Transação salva com sucesso!');
+          // Standard Transaction
+          const payload: CreateTransactionDto = {
+            description: data.description,
+            amount: numericAmount,
+            date: data.date.toISOString(),
+            type: data.type.toLowerCase() as 'income' | 'expense',
+            categoryId: data.categoryId === 'none' ? undefined : data.categoryId,
+            profileId: profileId!,
+          };
+
+          if (transactionId) {
+            await transactionsService.update(transactionId, payload);
+            toast.success('Transação atualizada com sucesso!');
+          } else {
+            await transactionsService.create(payload);
+            toast.success('Transação salva com sucesso!');
+          }
       }
       
       router.push('/dashboard'); 
@@ -150,7 +180,7 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
             placeholder="R$ 0,00"
         />
         {form.formState.errors.amount && (
-            <p className="text-sm text-red-500">{form.formState.errors.amount.message}</p>
+            <p className="text-sm text-red-500">{form.formState.errors.amount?.message}</p>
         )}
       </div>
 
@@ -162,9 +192,60 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
             {...form.register('description')} 
         />
         {form.formState.errors.description && (
-            <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
+            <p className="text-sm text-red-500">{form.formState.errors.description?.message}</p>
         )}
       </div>
+
+      {type === 'EXPENSE' && (
+          <div className="space-y-2">
+            <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+            <Select 
+                onValueChange={(val) => form.setValue('paymentMethod', val as any)} 
+                defaultValue="CASH"
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o método" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CASH">À Vista / Débito</SelectItem>
+                <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+      )}
+
+      {type === 'EXPENSE' && paymentMethod === 'CREDIT_CARD' && (
+          <div className="space-y-4 border-l-2 border-primary/50 pl-4">
+              <div className="space-y-2">
+                <Label htmlFor="creditCardId">Cartão de Crédito</Label>
+                <Select onValueChange={(val) => form.setValue('creditCardId', val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o cartão" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {creditCards.map((card) => (
+                        <SelectItem key={card.id} value={card.id}>{card.cardName} (Final {card.cardNumber.slice(-4)})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="installments">Parcelas</Label>
+                <Select onValueChange={(val) => form.setValue('installments', Number(val))} defaultValue="1">
+                    <SelectTrigger>
+                        <SelectValue placeholder="Número de parcelas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {[...Array(12)].map((_, i) => (
+                            <SelectItem key={i+1} value={String(i+1)}>{i+1}x</SelectItem>
+                        ))}
+                        <SelectItem value="18">18x</SelectItem>
+                        <SelectItem value="24">24x</SelectItem>
+                    </SelectContent>
+                </Select>
+              </div>
+          </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="categoryId">Categoria</Label>
@@ -213,7 +294,7 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
           </PopoverContent>
         </Popover>
         {form.formState.errors.date && (
-            <p className="text-sm text-red-500">{form.formState.errors.date.message}</p>
+            <p className="text-sm text-red-500">{form.formState.errors.date?.message}</p>
         )}
       </div>
 

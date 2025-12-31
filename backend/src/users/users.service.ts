@@ -25,11 +25,15 @@ export class UsersService {
     const savedUser = await this.usersRepository.save(user);
 
     // Create default profile
-    await this.profilesService.createProfile({
-      name: 'Pessoal',
+    const profile = await this.profilesService.createProfile({
+      name: 'Principal',
       userId: savedUser.id,
       active: true,
     });
+    
+    // Return user with defaultProfileId context if possible, or just the user.
+    // The auth.service.login handles fetching the profile, so just creating it here is sufficient 
+    // for the subsequent login call to find it.
 
     return savedUser;
   }

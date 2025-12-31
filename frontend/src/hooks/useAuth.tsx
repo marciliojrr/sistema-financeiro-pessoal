@@ -34,6 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('userName', name);
     if (profileId) {
         localStorage.setItem('profileId', profileId);
+    } else {
+        localStorage.removeItem('profileId');
     }
     setUserName(name);
     setIsAuthenticated(true);

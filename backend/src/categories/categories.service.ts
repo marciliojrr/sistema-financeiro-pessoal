@@ -14,7 +14,10 @@ export class CategoriesService {
   ) {}
 
   async createCategory(data: CreateCategoryDto, userId: string) {
-    const category = this.categoryRepository.create(data);
+    const category = this.categoryRepository.create({
+        ...data,
+        profile: { id: data.profileId }
+    });
     const savedCategory = await this.categoryRepository.save(category);
 
     await this.auditLogsService.logChange(

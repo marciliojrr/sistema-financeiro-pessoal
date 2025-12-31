@@ -22,9 +22,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: Home, label: 'Início', href: '/dashboard' },
-  { icon: Wallet, label: 'Contas', href: '/accounts' }, // Placeholder for now
+  { icon: Wallet, label: 'Dívidas', href: '/debts' },
   { icon: CreditCard, label: 'Cartões', href: '/credit-cards' },
-  { icon: PieChart, label: 'Relat.', href: '/reports' },
+  { icon: PieChart, label: 'Planej.', href: '/budgets' }, 
 ];
 
 export function MobileLayout({ children }: { children: React.ReactNode }) {
@@ -91,6 +91,11 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                              <Menu className="h-5 w-5" />
                              <span className="text-xs">Outros</span>
                         </Button>
+                        <Link href="/categories" className="w-full col-span-3">
+                            <Button variant="ghost" className="w-full text-xs">
+                                Gerenciar Categorias
+                            </Button>
+                        </Link>
                     </div>
                 </DrawerContent>
              </Drawer>
