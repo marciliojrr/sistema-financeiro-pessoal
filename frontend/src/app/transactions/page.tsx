@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 } from '@/components/ui/table'; // Need to create this or use standard table
-import { Plus, Pencil, Trash2, Receipt } from 'lucide-react';
+import { Plus, Pencil, Trash2, Receipt, Download } from 'lucide-react';
 import { transactionsService, Transaction } from '@/services/transactionsService';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -49,6 +49,38 @@ export default function TransactionsPage() {
         }
     };
 
+    const handleExportCSV = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const profileId = localStorage.getItem('profileId');
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/reports/export/csv${profileId ? `?profileId=${profileId}` : ''}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            
+            if (!response.ok) throw new Error('Falha ao exportar');
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transacoes_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            
+            toast.success('Arquivo exportado com sucesso!');
+        } catch (error) {
+            console.error('Failed to export CSV', error);
+            toast.error('Erro ao exportar CSV');
+        }
+    };
+
     return (
         <MobileLayout>
             <Card className="mb-6">
@@ -57,9 +89,14 @@ export default function TransactionsPage() {
                         <Receipt className="h-5 w-5" />
                         Transações
                     </CardTitle>
-                    <Button onClick={() => router.push('/transactions/new')}>
-                        <Plus className="mr-2 h-4 w-4" /> Nova
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                            <Download className="h-4 w-4" />
+                        </Button>
+                        <Button onClick={() => router.push('/transactions/new')}>
+                            <Plus className="mr-2 h-4 w-4" /> Nova
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     {loading ? (
