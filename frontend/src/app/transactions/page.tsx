@@ -10,7 +10,7 @@ import {
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { transactionsService, Transaction } from '@/services/transactionsService';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function TransactionsPage() {
@@ -21,7 +21,9 @@ export default function TransactionsPage() {
     const fetchTransactions = async () => {
         try {
             const data = await transactionsService.getAll();
-            setTransactions(data);
+            // Filtrar para não mostrar parcelas de compras parceladas
+            const filtered = data.filter(t => !t.installmentPurchaseId);
+            setTransactions(filtered);
         } catch (error) {
             console.error('Failed to fetch transactions', error);
             toast.error('Erro ao carregar transações');
@@ -56,7 +58,7 @@ export default function TransactionsPage() {
                         <Plus className="mr-2 h-4 w-4" /> Nova
                     </Button>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                     {loading ? (
                         <div className="text-center py-4">Carregando...</div>
                     ) : transactions.length === 0 ? (
@@ -64,43 +66,35 @@ export default function TransactionsPage() {
                             Nenhuma transação encontrada.
                         </div>
                     ) : (
-                        <div className="rounded-md border">
-                             <table className="w-full text-sm text-left">
-                                <thead className="bg-muted/50 text-muted-foreground font-medium">
-                                    <tr>
-                                        <th className="p-3">Data</th>
-                                        <th className="p-3">Descrição</th>
-                                        <th className="p-3">Valor</th>
-                                        <th className="p-3">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {transactions.map((t) => (
-                                        <tr key={t.id} className="border-t hover:bg-muted/50">
-                                            <td className="p-3">
-                                                {format(new Date(t.date), 'dd/MM/yyyy', { locale: ptBR })}
-                                            </td>
-                                            <td className="p-3">
-                                                <div className="font-medium">{t.description}</div>
-                                                <div className="text-xs text-muted-foreground">{t.type === 'INCOME' ? 'Receita' : 'Despesa'}</div>
-                                            </td>
-                                            <td className={`p-3 font-medium ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
-                                            </td>
-                                            <td className="p-3">
-                                                <div className="flex gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => router.push(`/transactions/${t.id}/edit`)}>
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(t.id)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                             </table>
+                        <div className="divide-y">
+                            {transactions.map((t) => (
+                                <div key={t.id} className="flex items-center justify-between p-4 hover:bg-muted/50">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-2 h-2 rounded-full ${t.type.toUpperCase() === 'INCOME' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                            <p className="font-medium truncate">{t.description}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                            <span>{t.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa'}</span>
+                                            <span>•</span>
+                                            <span>{format(parseISO(t.date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`font-bold whitespace-nowrap ${t.type.toUpperCase() === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
+                                        </span>
+                                        <div className="flex gap-1">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push(`/transactions/${t.id}/edit`)}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(t.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </CardContent>

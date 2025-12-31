@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, CreditCard, PieChart, Plus, Wallet, Menu } from 'lucide-react';
+import { Home, CreditCard, PieChart, Plus, Wallet, Menu, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Drawer,
   DrawerContent,
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
 
 export function MobileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -96,6 +98,21 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                                 Gerenciar Categorias
                             </Button>
                         </Link>
+                        <Link href="/transactions" className="w-full col-span-3">
+                            <Button variant="outline" className="w-full text-xs">
+                                📋 Ver Movimentações
+                            </Button>
+                        </Link>
+                        <div className="col-span-3 border-t pt-4 mt-2">
+                            <Button 
+                                variant="ghost" 
+                                className="w-full text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                                onClick={logout}
+                            >
+                                <LogOut className="h-4 w-4 mr-2" />
+                                Sair do Sistema
+                            </Button>
+                        </div>
                     </div>
                 </DrawerContent>
              </Drawer>

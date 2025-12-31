@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { dashboardService, DashboardSummary } from '@/services/dashboardService';
+import { transactionsService, Transaction } from '@/services/transactionsService';
 import { ExpensesChart } from '@/components/dashboard/ExpensesChart';
 import { toast } from 'sonner';
-import { ArrowDownIcon, ArrowUpIcon, Wallet } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, Wallet, List } from 'lucide-react';
+import { parseISO, format } from 'date-fns';
 
 import { useAuth } from '@/hooks/useAuth';
 
@@ -19,6 +23,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [fixedExpenses, setFixedExpenses] = useState(0);
   const [reserves, setReserves] = useState<{ name: string; current: number; target: number; percentage: number }[]>([]);
+  const [latestTransactions, setLatestTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -27,17 +32,21 @@ export default function DashboardPage() {
         const month = currentDate.getMonth() + 1;
         const year = currentDate.getFullYear();
 
-        const [summary, expenses, fixed, reservesData] = await Promise.all([
+        const [summary, expenses, fixed, reservesData, transactions] = await Promise.all([
            dashboardService.getSummary(),
            dashboardService.getExpensesByCategory(month, year),
            dashboardService.getFixedExpenses(month, year),
-           dashboardService.getReservesProgress()
+           dashboardService.getReservesProgress(),
+           transactionsService.getAll()
         ]);
         
         setData(summary);
         setChartData(expenses);
         setFixedExpenses(fixed);
         setReserves(reservesData);
+        // Filtrar parcelas de compras parceladas e pegar apenas as 5 mais recentes
+        const filteredTransactions = transactions.filter(t => !t.installmentPurchaseId);
+        setLatestTransactions(filteredTransactions.slice(0, 5));
       } catch (error) {
         console.error('Failed to fetch dashboard:', error);
         toast.error('Erro ao carregar dados do dashboard.');
@@ -56,10 +65,17 @@ export default function DashboardPage() {
     }).format(value);
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
   return (
     <MobileLayout>
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Bom dia, {userName?.split(' ')[0] || 'Visitante'} 👋</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{getGreeting()}, {userName?.split(' ')[0] || 'Visitante'} 👋</h1>
         <p className="text-muted-foreground">Aqui está seu resumo financeiro de {data ? `${data.currentMonth}/${data.currentYear}` : '...'}.</p>
       </header>
       
@@ -103,6 +119,45 @@ export default function DashboardPage() {
                      <p className="text-3xl font-bold">{formatCurrency(data?.balance.balance || 0)}</p>
                  )}
             </CardContent>
+         </Card>
+
+         {/* Latest Transactions */}
+         <Card>
+             <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+                 <CardTitle className="text-sm font-medium flex items-center gap-2">
+                   <List className="h-4 w-4" />
+                   Últimas Movimentações
+                 </CardTitle>
+                 <Link href="/transactions">
+                     <Button variant="ghost" size="sm" className="text-xs">
+                         Ver todas
+                     </Button>
+                 </Link>
+             </CardHeader>
+             <CardContent className="p-4 pt-0 space-y-3">
+                 {loading ? (
+                   <>
+                     <Skeleton className="h-10 w-full rounded-lg" />
+                     <Skeleton className="h-10 w-full rounded-lg" />
+                   </>
+                 ) : latestTransactions.length === 0 ? (
+                   <p className="text-sm text-gray-500 text-center py-4">Nenhuma movimentação recente.</p>
+                 ) : (
+                   latestTransactions.map((t) => (
+                     <div key={t.id} className="flex justify-between items-center border-b last:border-0 pb-2 last:pb-0">
+                       <div>
+                         <p className="font-medium text-sm">{t.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa'} • {format(parseISO(t.date), 'dd/MM/yyyy')}
+                          </p>
+                       </div>
+                       <span className={`font-bold text-sm ${t.type.toUpperCase() === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                         {formatCurrency(Number(t.amount))}
+                       </span>
+                     </div>
+                   ))
+                 )}
+             </CardContent>
          </Card>
 
          {/* Charts Section */}

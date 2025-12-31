@@ -7,7 +7,7 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 import { CreditCard } from './credit-card.entity';
-import { InstallmentItem } from './installment-item.entity';
+import { FinancialMovement } from './financial-movement.entity';
 import { FinancialCategory } from './financial-category.entity';
 
 @Entity('installment_purchases')
@@ -33,9 +33,9 @@ export class InstallmentPurchase {
   @ManyToOne(() => FinancialCategory, { nullable: true })
   category: FinancialCategory;
 
-  // MUDANÇA: Relacionamento com as parcelas individuais
-  @OneToMany(() => InstallmentItem, (item) => item.installmentPurchase)
-  installmentItems: InstallmentItem[];
+  // MUDANÇA: Relacionamento com as parcelas individuais (agora via FinancialMovement)
+  @OneToMany(() => FinancialMovement, (movement) => movement.installmentPurchase)
+  movements: FinancialMovement[];
 
   @Column({ nullable: true, type: 'timestamp' })
   deletedAt?: Date;

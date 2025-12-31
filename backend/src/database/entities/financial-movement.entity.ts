@@ -11,6 +11,8 @@ import { Profile } from './profile.entity';
 import { FinancialCategory } from './financial-category.entity';
 import { FinancialScenario } from './financial-scenario.entity';
 import { Debt } from './debt.entity';
+import { Invoice } from './invoice.entity';
+import { InstallmentPurchase } from './installment-purchase.entity';
 
 export enum MovementType {
   INCOME = 'income',
@@ -75,4 +77,22 @@ export class FinancialMovement {
 
   @Column({ nullable: true })
   debtId: string;
+
+  @ManyToOne(() => Invoice, (invoice) => invoice.financialMovements, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  invoice: Invoice;
+
+  @Column({ nullable: true })
+  invoiceId: string;
+
+  @ManyToOne(() => InstallmentPurchase, (purchase) => purchase.movements, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  installmentPurchase: InstallmentPurchase;
+
+  @Column({ nullable: true })
+  installmentPurchaseId: string;
 }

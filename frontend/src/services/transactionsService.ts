@@ -10,6 +10,7 @@ export interface Transaction {
   isPaid: boolean;
   paymentDate?: string;
   profileId?: string;
+  installmentPurchaseId?: string | null;
 }
 
 export interface CreateTransactionDto {

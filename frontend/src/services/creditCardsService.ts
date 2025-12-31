@@ -35,21 +35,26 @@ export interface PayCreditCardInvoiceDto {
   categoryId?: string;
 }
 
-export interface InstallmentItem {
+export interface creditCardMovement {
   id: string;
-  installmentNumber: number;
+  description: string;
   amount: number;
-  dueDate: string;
-  paid: boolean;
+  date: string;
+  type: 'income' | 'expense';
 }
 
 export interface CreditCardInvoice {
   id: string;
   month: string; // YYYY-MM
   totalAmount: number;
-  paid: boolean;
-  installmentItems: InstallmentItem[];
-  creditCardId?: string; // Sometimes populated
+  year: number;
+  status: 'OPEN' | 'CLOSED' | 'PAID';
+  previousBalance?: number; // Optional
+  paid: boolean; // Backwards compatibility or derived
+  financialMovements: creditCardMovement[];
+  creditCardId?: string;
+  dueDate: string;
+  closingDate: string;
 }
 
 export const creditCardsService = {

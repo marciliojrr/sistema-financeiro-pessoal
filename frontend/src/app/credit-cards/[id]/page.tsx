@@ -8,14 +8,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, CreditCard as CreditCardIcon, FileText, ShoppingBag, Plus } from 'lucide-react';
-import { creditCardsService, CreditCard, CreditCardInvoice, InstallmentItem } from '@/services/creditCardsService';
+import { creditCardsService, CreditCard, CreditCardInvoice } from '@/services/creditCardsService';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface ExtendedCreditCard extends CreditCard {
     invoices: CreditCardInvoice[];
-    purchases: any[]; // Defines basic structure
+    purchases: any[];
 }
 
 export default function CardDashboardPage() {
@@ -106,10 +117,52 @@ export default function CardDashboardPage() {
                         <ShoppingBag className="h-5 w-5 text-blue-500" />
                         <span className="text-xs">Nova Compra</span>
                     </Button>
-                    <Button variant="outline" className="h-auto py-4 flex flex-col gap-2" disabled title="Em breve">
-                        <FileText className="h-5 w-5 text-gray-400" />
-                        <span className="text-xs text-gray-400">Gerar Fatura</span>
-                    </Button>
+                    
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
+                                <FileText className="h-5 w-5 text-green-600" />
+                                <span className="text-xs text-green-600">Fechar Fatura</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Fechar Fatura</DialogTitle>
+                                <DialogDescription>
+                                    Selecione o mês e ano para encerrar a fatura. Isso congelará os lançamentos.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.currentTarget);
+                                const month = Number(formData.get('month'));
+                                const year = Number(formData.get('year'));
+                                try {
+                                    await creditCardsService.closeInvoice(card.id, year, month);
+                                    toast.success("Fatura fechada com sucesso!");
+                                    fetchCardDetails();
+                                } catch (err) {
+                                    toast.error("Erro ao fechar fatura (verifique se já existe).");
+                                }
+                            }}>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="month">Mês</Label>
+                                            <Input id="month" name="month" type="number" min="1" max="12" defaultValue={new Date().getMonth() + 1} required />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="year">Ano</Label>
+                                            <Input id="year" name="year" type="number" min="2020" defaultValue={new Date().getFullYear()} required />
+                                        </div>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit">Confirmar Fechamento</Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 {/* Invoices & History */}

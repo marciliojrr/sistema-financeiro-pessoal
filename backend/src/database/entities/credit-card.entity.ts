@@ -8,9 +8,7 @@ import {
 } from 'typeorm';
 import { Profile } from './profile.entity';
 import { InstallmentPurchase } from './installment-purchase.entity';
-import { CreditCardInvoice } from './credit-card-invoice.entity';
-//import { InstallmentPurchase } from './installment-purchase.entity';
-//import { CreditCardInvoice } from './credit-card-invoice.entity';
+import { Invoice } from './invoice.entity';
 
 @Entity('credit_cards')
 export class CreditCard {
@@ -43,8 +41,8 @@ export class CreditCard {
   @OneToMany(() => InstallmentPurchase, (purchase) => purchase.creditCard)
   purchases: InstallmentPurchase[];
 
-  @OneToMany(() => CreditCardInvoice, (invoice) => invoice.creditCard)
-  invoices: CreditCardInvoice[];
+  @OneToMany(() => Invoice, (invoice) => invoice.card)
+  invoices: Invoice[];
 
   @DeleteDateColumn()
   deletedAt?: Date;

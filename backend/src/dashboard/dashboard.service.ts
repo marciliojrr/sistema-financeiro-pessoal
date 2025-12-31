@@ -32,6 +32,9 @@ export class DashboardService {
     const end = endOfMonth(today);
 
     qb.andWhere('m.date BETWEEN :start AND :end', { start, end });
+    // Exclude credit card deferred items (Cash Basis view - only counting Invoice Payment)
+    qb.andWhere('m.installmentPurchaseId IS NULL');
+    qb.andWhere('m.invoiceId IS NULL');
 
     const movements = await qb.getMany();
 
