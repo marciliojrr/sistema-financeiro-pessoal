@@ -1,128 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calculator, TrendingUp, TrendingDown, PiggyBank, DollarSign, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Calculator, 
+  CreditCard, 
+  TrendingUp, 
+  TrendingDown, 
+  PiggyBank, 
+  DollarSign, 
+  Calendar,
+  ShoppingCart,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  ArrowRight
+} from 'lucide-react';
+import { toast } from 'sonner';
+import api from '@/services/api';
 
-type SimulationResult = {
-  months: number;
-  finalValue: number;
-  totalContributions: number;
-  totalInterest: number;
-  monthlyData: Array<{
-    month: number;
-    balance: number;
-    contribution: number;
-    interest: number;
-  }>;
+// Types
+type CardSuggestion = {
+  card: {
+    id: string;
+    name: string;
+    limit: number;
+    closingDay: number;
+    dueDay: number;
+  };
+  workable: boolean;
+  reason?: string;
+  diffDays?: number;
+  dueDate?: string;
+  closingDate?: string;
+};
+
+type DashboardSummary = {
+  income: number;
+  expense: number;
+  balance: number;
+  reservesTotal: number;
+  budgetUsage: number;
 };
 
 export default function SimulationPage() {
-  // Investment simulation state
-  const [initialValue, setInitialValue] = useState('1000');
-  const [monthlyContribution, setMonthlyContribution] = useState('500');
-  const [interestRate, setInterestRate] = useState('1');
-  const [period, setPeriod] = useState('12');
-  const [simulationType, setSimulationType] = useState<'investment' | 'savings' | 'debt'>('investment');
-  
-  const [result, setResult] = useState<SimulationResult | null>(null);
+  // State for Tab 1: Purchase Simulation
+  const [purchaseValue, setPurchaseValue] = useState('');
+  const [installments, setInstallments] = useState('1');
+  const [cardSuggestions, setCardSuggestions] = useState<{
+    bestCard: CardSuggestion | null;
+    others: CardSuggestion[];
+    all: CardSuggestion[];
+  } | null>(null);
+  const [loadingCards, setLoadingCards] = useState(false);
 
-  const calculateInvestment = () => {
-    const initial = parseFloat(initialValue) || 0;
-    const monthly = parseFloat(monthlyContribution) || 0;
-    const rate = (parseFloat(interestRate) || 0) / 100;
-    const months = parseInt(period) || 12;
+  // State for Tab 2: Scenarios
+  const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(null);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+  const [scenarioIncome, setScenarioIncome] = useState(0);
+  const [scenarioExpense, setScenarioExpense] = useState(0);
+  const [scenarioNewDebt, setScenarioNewDebt] = useState(0);
 
-    let balance = initial;
-    let totalContributions = initial;
-    let totalInterest = 0;
-    const monthlyData = [];
-
-    for (let i = 1; i <= months; i++) {
-      const interest = balance * rate;
-      balance += interest + monthly;
-      totalContributions += monthly;
-      totalInterest += interest;
-
-      monthlyData.push({
-        month: i,
-        balance: balance,
-        contribution: monthly,
-        interest: interest
-      });
-    }
-
-    setResult({
-      months,
-      finalValue: balance,
-      totalContributions,
-      totalInterest,
-      monthlyData
-    });
-  };
-
-  const calculateDebtPayoff = () => {
-    const debt = parseFloat(initialValue) || 0;
-    const payment = parseFloat(monthlyContribution) || 0;
-    const rate = (parseFloat(interestRate) || 0) / 100;
-
-    if (payment <= debt * rate) {
-      setResult({
-        months: 999,
-        finalValue: 0,
-        totalContributions: 0,
-        totalInterest: 0,
-        monthlyData: []
-      });
-      return;
-    }
-
-    let balance = debt;
-    let months = 0;
-    let totalPaid = 0;
-    let totalInterest = 0;
-    const monthlyData = [];
-
-    while (balance > 0 && months < 360) {
-      months++;
-      const interest = balance * rate;
-      totalInterest += interest;
-      balance = balance + interest - payment;
-      totalPaid += payment;
-
-      if (balance < 0) {
-        totalPaid += balance;
-        balance = 0;
-      }
-
-      monthlyData.push({
-        month: months,
-        balance: Math.max(0, balance),
-        contribution: payment,
-        interest: interest
-      });
-    }
-
-    setResult({
-      months,
-      finalValue: 0,
-      totalContributions: totalPaid,
-      totalInterest,
-      monthlyData
-    });
-  };
-
-  const handleCalculate = () => {
-    if (simulationType === 'debt') {
-      calculateDebtPayoff();
-    } else {
-      calculateInvestment();
-    }
-  };
+  // State for Tab 3: Calculators
+  const [calcInitialValue, setCalcInitialValue] = useState('1000');
+  const [calcMonthly, setCalcMonthly] = useState('500');
+  const [calcRate, setCalcRate] = useState('1');
+  const [calcPeriod, setCalcPeriod] = useState('12');
+  const [calcType, setCalcType] = useState<'investment' | 'debt'>('investment');
+  const [calcResult, setCalcResult] = useState<{
+    finalValue: number;
+    totalContributions: number;
+    totalInterest: number;
+    months: number;
+  } | null>(null);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -130,6 +86,158 @@ export default function SimulationPage() {
       currency: 'BRL'
     }).format(value);
   };
+
+  // Load dashboard data on mount
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const profileId = localStorage.getItem('profileId');
+        const response = await api.get('/reports/dashboard-summary', {
+          params: { profileId }
+        });
+        setDashboardData(response.data);
+      } catch (error) {
+        console.error('Failed to load dashboard data', error);
+        toast.error('Erro ao carregar dados financeiros');
+      } finally {
+        setLoadingDashboard(false);
+      }
+    };
+    loadDashboardData();
+  }, []);
+
+  // Tab 1: Simulate Purchase
+  const handleSimulatePurchase = async () => {
+    const value = parseFloat(purchaseValue);
+    if (!value || value <= 0) {
+      toast.error('Informe um valor válido');
+      return;
+    }
+
+    setLoadingCards(true);
+    try {
+      const response = await api.get('/credit-cards/suggest-best', {
+        params: { amount: value }
+      });
+      setCardSuggestions(response.data);
+    } catch (error) {
+      console.error('Failed to get card suggestions', error);
+      toast.error('Erro ao buscar sugestões de cartão');
+    } finally {
+      setLoadingCards(false);
+    }
+  };
+
+  const getInstallmentImpact = () => {
+    const value = parseFloat(purchaseValue) || 0;
+    const numInstallments = parseInt(installments) || 1;
+    const monthlyImpact = value / numInstallments;
+    const currentBalance = dashboardData?.balance || 0;
+    const newBalance = currentBalance - monthlyImpact;
+    const percentageOfIncome = dashboardData?.income 
+      ? (monthlyImpact / dashboardData.income) * 100 
+      : 0;
+
+    return { monthlyImpact, newBalance, percentageOfIncome };
+  };
+
+  // Tab 2: Scenario Comparison
+  const getScenarioComparison = () => {
+    if (!dashboardData) return null;
+
+    const newIncome = dashboardData.income + scenarioIncome;
+    const newExpense = dashboardData.expense + scenarioExpense + (scenarioNewDebt / 12);
+    const newBalance = newIncome - newExpense;
+    const balanceDiff = newBalance - dashboardData.balance;
+
+    return {
+      current: {
+        income: dashboardData.income,
+        expense: dashboardData.expense,
+        balance: dashboardData.balance
+      },
+      projected: {
+        income: newIncome,
+        expense: newExpense,
+        balance: newBalance
+      },
+      diff: {
+        income: scenarioIncome,
+        expense: scenarioExpense + (scenarioNewDebt / 12),
+        balance: balanceDiff
+      }
+    };
+  };
+
+  // Tab 3: Calculators
+  const handleCalculate = () => {
+    const initial = parseFloat(calcInitialValue) || 0;
+    const monthly = parseFloat(calcMonthly) || 0;
+    const rate = (parseFloat(calcRate) || 0) / 100;
+    const months = parseInt(calcPeriod) || 12;
+
+    if (calcType === 'debt') {
+      // Debt payoff calculation
+      const debt = initial;
+      const payment = monthly;
+      
+      if (payment <= debt * rate) {
+        setCalcResult({
+          months: 999,
+          finalValue: 0,
+          totalContributions: 0,
+          totalInterest: 0
+        });
+        return;
+      }
+
+      let balance = debt;
+      let monthCount = 0;
+      let totalPaid = 0;
+      let totalInterest = 0;
+
+      while (balance > 0 && monthCount < 360) {
+        monthCount++;
+        const interest = balance * rate;
+        totalInterest += interest;
+        balance = balance + interest - payment;
+        totalPaid += payment;
+        if (balance < 0) {
+          totalPaid += balance;
+          balance = 0;
+        }
+      }
+
+      setCalcResult({
+        months: monthCount,
+        finalValue: 0,
+        totalContributions: totalPaid,
+        totalInterest
+      });
+    } else {
+      // Investment calculation
+      let balance = initial;
+      let totalContributions = initial;
+      let totalInterest = 0;
+
+      for (let i = 1; i <= months; i++) {
+        const interest = balance * rate;
+        balance += interest + monthly;
+        totalContributions += monthly;
+        totalInterest += interest;
+      }
+
+      setCalcResult({
+        months,
+        finalValue: balance,
+        totalContributions,
+        totalInterest
+      });
+    }
+  };
+
+  const impact = getInstallmentImpact();
+  const scenarioComparison = getScenarioComparison();
 
   return (
     <MobileLayout>
@@ -141,231 +249,427 @@ export default function SimulationPage() {
         </h1>
       </div>
 
-      {/* Simulation Type */}
-      <Card className="mb-4">
-        <CardContent className="pt-4">
-          <Label className="mb-2 block">Tipo de Simulação</Label>
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant={simulationType === 'investment' ? 'default' : 'outline'}
-              className="flex flex-col h-auto py-3"
-              onClick={() => setSimulationType('investment')}
-            >
-              <TrendingUp className="h-5 w-5 mb-1" />
-              <span className="text-xs">Investimento</span>
-            </Button>
-            <Button
-              variant={simulationType === 'savings' ? 'default' : 'outline'}
-              className="flex flex-col h-auto py-3"
-              onClick={() => setSimulationType('savings')}
-            >
-              <PiggyBank className="h-5 w-5 mb-1" />
-              <span className="text-xs">Poupança</span>
-            </Button>
-            <Button
-              variant={simulationType === 'debt' ? 'default' : 'outline'}
-              className="flex flex-col h-auto py-3"
-              onClick={() => setSimulationType('debt')}
-            >
-              <TrendingDown className="h-5 w-5 mb-1" />
-              <span className="text-xs">Quitação</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="purchase" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsTrigger value="purchase" className="text-xs">
+            <ShoppingCart className="h-4 w-4 mr-1" />
+            Compra
+          </TabsTrigger>
+          <TabsTrigger value="scenario" className="text-xs">
+            <TrendingUp className="h-4 w-4 mr-1" />
+            Cenários
+          </TabsTrigger>
+          <TabsTrigger value="calc" className="text-xs">
+            <Calculator className="h-4 w-4 mr-1" />
+            Calculadora
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Input Form */}
-      <Card className="mb-4">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">
-            {simulationType === 'debt' ? 'Dados da Dívida' : 'Dados do Investimento'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="initial">
-              {simulationType === 'debt' ? 'Valor da Dívida (R$)' : 'Valor Inicial (R$)'}
-            </Label>
-            <Input
-              id="initial"
-              type="number"
-              value={initialValue}
-              onChange={(e) => setInitialValue(e.target.value)}
-              placeholder="1000"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="monthly">
-              {simulationType === 'debt' ? 'Pagamento Mensal (R$)' : 'Aporte Mensal (R$)'}
-            </Label>
-            <Input
-              id="monthly"
-              type="number"
-              value={monthlyContribution}
-              onChange={(e) => setMonthlyContribution(e.target.value)}
-              placeholder="500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="rate">Taxa Mensal (%)</Label>
-              <Input
-                id="rate"
-                type="number"
-                step="0.1"
-                value={interestRate}
-                onChange={(e) => setInterestRate(e.target.value)}
-                placeholder="1"
-              />
-            </div>
-            {simulationType !== 'debt' && (
+        {/* Tab 1: Purchase Simulation */}
+        <TabsContent value="purchase" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Simular Compra Parcelada
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="period">Período (meses)</Label>
+                <Label>Valor da Compra (R$)</Label>
                 <Input
-                  id="period"
                   type="number"
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  placeholder="12"
+                  value={purchaseValue}
+                  onChange={(e) => setPurchaseValue(e.target.value)}
+                  placeholder="1000.00"
                 />
               </div>
-            )}
-          </div>
+              <div>
+                <Label>Parcelas Desejadas</Label>
+                <div className="grid grid-cols-6 gap-1 mt-1">
+                  {[1, 2, 3, 6, 10, 12].map(n => (
+                    <Button
+                      key={n}
+                      variant={installments === String(n) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setInstallments(String(n))}
+                    >
+                      {n}x
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <Button className="w-full" onClick={handleSimulatePurchase} disabled={loadingCards}>
+                {loadingCards ? 'Analisando...' : 'Analisar Melhor Cartão'}
+              </Button>
+            </CardContent>
+          </Card>
 
-          <Button className="w-full" onClick={handleCalculate}>
-            <Calculator className="h-4 w-4 mr-2" />
-            Calcular
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      {result && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Resultado da Simulação
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {simulationType === 'debt' ? (
-              <div className="space-y-4">
-                {result.months >= 360 ? (
-                  <div className="text-center py-4 text-red-500">
-                    <p className="font-bold">⚠️ Pagamento insuficiente!</p>
-                    <p className="text-sm">O valor mensal não cobre os juros.</p>
+          {/* Impact Preview */}
+          {purchaseValue && parseFloat(purchaseValue) > 0 && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Impacto no Orçamento
+                </h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-background p-2 rounded">
+                    <p className="text-muted-foreground text-xs">Parcela Mensal</p>
+                    <p className="font-bold text-lg">{formatCurrency(impact.monthlyImpact)}</p>
                   </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-background rounded-lg">
-                        <Calendar className="h-5 w-5 mx-auto mb-1 text-primary" />
-                        <p className="text-2xl font-bold">{result.months}</p>
-                        <p className="text-xs text-muted-foreground">meses para quitar</p>
-                      </div>
-                      <div className="text-center p-3 bg-background rounded-lg">
-                        <DollarSign className="h-5 w-5 mx-auto mb-1 text-green-500" />
-                        <p className="text-lg font-bold">{formatCurrency(result.totalContributions)}</p>
-                        <p className="text-xs text-muted-foreground">total pago</p>
-                      </div>
-                    </div>
-                    <div className="text-center p-3 bg-red-50 rounded-lg border border-red-100">
-                      <p className="text-sm text-red-600">Juros pagos</p>
-                      <p className="text-xl font-bold text-red-600">{formatCurrency(result.totalInterest)}</p>
-                    </div>
-                  </>
+                  <div className="bg-background p-2 rounded">
+                    <p className="text-muted-foreground text-xs">% da Receita</p>
+                    <p className={`font-bold text-lg ${impact.percentageOfIncome > 30 ? 'text-red-500' : 'text-green-600'}`}>
+                      {impact.percentageOfIncome.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 p-2 bg-background rounded">
+                  <p className="text-xs text-muted-foreground">Saldo após compra</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">{formatCurrency(dashboardData?.balance || 0)}</span>
+                    <ArrowRight className="h-4 w-4" />
+                    <span className={`font-bold ${impact.newBalance < 0 ? 'text-red-500' : 'text-green-600'}`}>
+                      {formatCurrency(impact.newBalance)}
+                    </span>
+                  </div>
+                </div>
+                {impact.percentageOfIncome > 30 && (
+                  <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                    ⚠️ Esta compra representa mais de 30% da sua receita mensal. Considere parcelar em mais vezes.
+                  </div>
                 )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="text-center p-4 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-lg">
-                  <p className="text-sm opacity-80">Valor Final em {result.months} meses</p>
-                  <p className="text-3xl font-bold">{formatCurrency(result.finalValue)}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-background rounded-lg">
-                    <p className="text-xs text-muted-foreground">Total Investido</p>
-                    <p className="text-lg font-bold">{formatCurrency(result.totalContributions)}</p>
-                  </div>
-                  <div className="text-center p-3 bg-background rounded-lg">
-                    <p className="text-xs text-muted-foreground">Rendimento</p>
-                    <p className="text-lg font-bold text-green-600">{formatCurrency(result.totalInterest)}</p>
-                  </div>
-                </div>
-                <div className="text-center text-sm text-muted-foreground">
-                  Rentabilidade: {((result.totalInterest / result.totalContributions) * 100).toFixed(1)}%
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Quick Presets */}
-      <Card className="mt-4">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Cenários Rápidos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSimulationType('investment');
-                setInitialValue('5000');
-                setMonthlyContribution('1000');
-                setInterestRate('1');
-                setPeriod('24');
-              }}
-            >
-              Reserva 2 anos
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSimulationType('investment');
-                setInitialValue('0');
-                setMonthlyContribution('500');
-                setInterestRate('0.8');
-                setPeriod('60');
-              }}
-            >
-              Aposentadoria
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSimulationType('debt');
-                setInitialValue('10000');
-                setMonthlyContribution('800');
-                setInterestRate('3');
-                setPeriod('');
-              }}
-            >
-              Quitar dívida
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSimulationType('savings');
-                setInitialValue('1000');
-                setMonthlyContribution('200');
-                setInterestRate('0.5');
-                setPeriod('12');
-              }}
-            >
-              Poupança 1 ano
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          {/* Card Suggestions */}
+          {cardSuggestions && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Sugestão de Cartão</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {cardSuggestions.bestCard ? (
+                  <>
+                    <div className="p-3 border-2 border-green-500 rounded-lg bg-green-50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <span className="font-bold text-green-700">Melhor Opção</span>
+                      </div>
+                      <p className="font-semibold">{cardSuggestions.bestCard.card.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {cardSuggestions.bestCard.diffDays} dias até o vencimento
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Limite: {formatCurrency(cardSuggestions.bestCard.card.limit)}
+                      </p>
+                    </div>
+
+                    {cardSuggestions.others.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Outras opções:</p>
+                        {cardSuggestions.others.map((s, i) => (
+                          <div key={i} className="p-2 border rounded text-sm">
+                            <p className="font-medium">{s.card.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {s.diffDays} dias • Limite: {formatCurrency(s.card.limit)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-3 border border-red-200 rounded-lg bg-red-50">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-red-500" />
+                      <span className="text-red-700">Nenhum cartão com limite disponível</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Installment Recommendation */}
+                {dashboardData && parseFloat(purchaseValue) > 0 && (
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-sm font-medium text-blue-700 mb-2">💡 Sugestão de Parcelas</p>
+                    <p className="text-xs text-blue-600">
+                      {(() => {
+                        const value = parseFloat(purchaseValue);
+                        const freeBalance = dashboardData.balance * 0.3; // Max 30% of balance
+                        const ideal = Math.ceil(value / freeBalance);
+                        if (ideal <= 1) return "Você pode pagar à vista sem comprometer seu orçamento.";
+                        if (ideal <= 3) return `Parcele em ${ideal}x para manter conforto financeiro.`;
+                        if (ideal <= 12) return `Sugerimos ${ideal}x para não impactar demais seu saldo.`;
+                        return "Considere adiar essa compra ou buscar alternativas mais baratas.";
+                      })()}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Tab 2: Scenarios */}
+        <TabsContent value="scenario" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Criar Cenário Hipotético</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loadingDashboard ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : (
+                <>
+                  <div className="p-3 bg-muted rounded-lg text-sm">
+                    <p className="font-medium mb-1">Situação Atual:</p>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Receita</p>
+                        <p className="font-bold text-green-600">{formatCurrency(dashboardData?.income || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Despesa</p>
+                        <p className="font-bold text-red-600">{formatCurrency(dashboardData?.expense || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Saldo</p>
+                        <p className="font-bold">{formatCurrency(dashboardData?.balance || 0)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-600" />
+                      Adicionar Receita Mensal
+                    </Label>
+                    <Input
+                      type="number"
+                      value={scenarioIncome || ''}
+                      onChange={(e) => setScenarioIncome(parseFloat(e.target.value) || 0)}
+                      placeholder="Ex: Aumento de salário"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-red-600" />
+                      Adicionar Despesa Mensal
+                    </Label>
+                    <Input
+                      type="number"
+                      value={scenarioExpense || ''}
+                      onChange={(e) => setScenarioExpense(parseFloat(e.target.value) || 0)}
+                      placeholder="Ex: Novo aluguel"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-amber-600" />
+                      Nova Dívida (valor total)
+                    </Label>
+                    <Input
+                      type="number"
+                      value={scenarioNewDebt || ''}
+                      onChange={(e) => setScenarioNewDebt(parseFloat(e.target.value) || 0)}
+                      placeholder="Ex: Financiamento (divide em 12 meses)"
+                    />
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Scenario Comparison */}
+          {scenarioComparison && (scenarioIncome > 0 || scenarioExpense > 0 || scenarioNewDebt > 0) && (
+            <Card className="border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Comparativo: Atual vs Projetado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Current */}
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-xs font-medium mb-2 text-center">ATUAL</p>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Receita</span>
+                        <span className="text-green-600">{formatCurrency(scenarioComparison.current.income)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Despesa</span>
+                        <span className="text-red-600">{formatCurrency(scenarioComparison.current.expense)}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-1">
+                        <span className="font-medium">Saldo</span>
+                        <span className="font-bold">{formatCurrency(scenarioComparison.current.balance)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Projected */}
+                  <div className={`p-3 rounded-lg ${scenarioComparison.diff.balance >= 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                    <p className="text-xs font-medium mb-2 text-center">PROJETADO</p>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Receita</span>
+                        <span className="text-green-600">{formatCurrency(scenarioComparison.projected.income)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Despesa</span>
+                        <span className="text-red-600">{formatCurrency(scenarioComparison.projected.expense)}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-1">
+                        <span className="font-medium">Saldo</span>
+                        <span className={`font-bold ${scenarioComparison.projected.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                          {formatCurrency(scenarioComparison.projected.balance)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Diff Summary */}
+                <div className={`mt-3 p-2 rounded text-center ${scenarioComparison.diff.balance >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <p className="text-sm">
+                    {scenarioComparison.diff.balance >= 0 ? '✅' : '⚠️'} Diferença no saldo: 
+                    <span className={`font-bold ml-1 ${scenarioComparison.diff.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      {scenarioComparison.diff.balance >= 0 ? '+' : ''}{formatCurrency(scenarioComparison.diff.balance)}
+                    </span>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Tab 3: Calculators */}
+        <TabsContent value="calc" className="space-y-4">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <Button
+                  variant={calcType === 'investment' ? 'default' : 'outline'}
+                  onClick={() => setCalcType('investment')}
+                >
+                  <PiggyBank className="h-4 w-4 mr-2" />
+                  Investimento
+                </Button>
+                <Button
+                  variant={calcType === 'debt' ? 'default' : 'outline'}
+                  onClick={() => setCalcType('debt')}
+                >
+                  <TrendingDown className="h-4 w-4 mr-2" />
+                  Quitação
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <Label>{calcType === 'debt' ? 'Valor da Dívida' : 'Valor Inicial'} (R$)</Label>
+                  <Input
+                    type="number"
+                    value={calcInitialValue}
+                    onChange={(e) => setCalcInitialValue(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>{calcType === 'debt' ? 'Pagamento Mensal' : 'Aporte Mensal'} (R$)</Label>
+                  <Input
+                    type="number"
+                    value={calcMonthly}
+                    onChange={(e) => setCalcMonthly(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Taxa Mensal (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={calcRate}
+                      onChange={(e) => setCalcRate(e.target.value)}
+                    />
+                  </div>
+                  {calcType === 'investment' && (
+                    <div>
+                      <Label>Período (meses)</Label>
+                      <Input
+                        type="number"
+                        value={calcPeriod}
+                        onChange={(e) => setCalcPeriod(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+                <Button className="w-full" onClick={handleCalculate}>
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Calcular
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Calculator Result */}
+          {calcResult && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-4">
+                {calcType === 'debt' ? (
+                  calcResult.months >= 360 ? (
+                    <div className="text-center text-red-500 py-4">
+                      <XCircle className="h-8 w-8 mx-auto mb-2" />
+                      <p className="font-bold">Pagamento insuficiente!</p>
+                      <p className="text-sm">O valor não cobre os juros mensais.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="text-center p-3 bg-background rounded-lg">
+                        <Calendar className="h-6 w-6 mx-auto mb-1 text-primary" />
+                        <p className="text-2xl font-bold">{calcResult.months} meses</p>
+                        <p className="text-xs text-muted-foreground">para quitar</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="text-center p-2 bg-background rounded">
+                          <p className="text-muted-foreground">Total Pago</p>
+                          <p className="font-bold">{formatCurrency(calcResult.totalContributions)}</p>
+                        </div>
+                        <div className="text-center p-2 bg-red-50 rounded">
+                          <p className="text-red-600 text-xs">Juros Pagos</p>
+                          <p className="font-bold text-red-600">{formatCurrency(calcResult.totalInterest)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-center p-4 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-lg">
+                      <p className="text-sm opacity-80">Valor Final em {calcResult.months} meses</p>
+                      <p className="text-2xl font-bold">{formatCurrency(calcResult.finalValue)}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="text-center p-2 bg-background rounded">
+                        <p className="text-muted-foreground text-xs">Total Investido</p>
+                        <p className="font-bold">{formatCurrency(calcResult.totalContributions)}</p>
+                      </div>
+                      <div className="text-center p-2 bg-background rounded">
+                        <p className="text-muted-foreground text-xs">Rendimento</p>
+                        <p className="font-bold text-green-600">{formatCurrency(calcResult.totalInterest)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </MobileLayout>
   );
 }
