@@ -80,11 +80,13 @@ export default function SimulationPage() {
     months: number;
   } | null>(null);
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | undefined | null) => {
+    const safeValue = Number(value);
+    if (isNaN(safeValue)) return 'R$ 0,00';
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value);
+    }).format(safeValue);
   };
 
   // Load dashboard data on mount
@@ -116,7 +118,7 @@ export default function SimulationPage() {
 
     setLoadingCards(true);
     try {
-      const response = await api.get('/credit-cards/suggest-best', {
+      const response = await api.get('/credit-cards/recommendation', {
         params: { amount: value }
       });
       setCardSuggestions(response.data);
@@ -132,13 +134,17 @@ export default function SimulationPage() {
     const value = parseFloat(purchaseValue) || 0;
     const numInstallments = parseInt(installments) || 1;
     const monthlyImpact = value / numInstallments;
-    const currentBalance = dashboardData?.balance || 0;
+    const currentBalance = Number(dashboardData?.balance) || 0;
     const newBalance = currentBalance - monthlyImpact;
-    const percentageOfIncome = dashboardData?.income 
-      ? (monthlyImpact / dashboardData.income) * 100 
-      : 0;
+    const income = Number(dashboardData?.income) || 0;
+    const percentageOfIncome = income > 0 ? (monthlyImpact / income) * 100 : 0;
 
-    return { monthlyImpact, newBalance, percentageOfIncome };
+    return { 
+      monthlyImpact: isNaN(monthlyImpact) ? 0 : monthlyImpact, 
+      newBalance: isNaN(newBalance) ? 0 : newBalance, 
+      percentageOfIncome: isNaN(percentageOfIncome) ? 0 : percentageOfIncome,
+      hasData: income > 0 || currentBalance > 0
+    };
   };
 
   // Tab 2: Scenario Comparison
@@ -328,7 +334,7 @@ export default function SimulationPage() {
                 <div className="mt-3 p-2 bg-background rounded">
                   <p className="text-xs text-muted-foreground">Saldo após compra</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">{formatCurrency(dashboardData?.balance || 0)}</span>
+                    <span className="text-muted-foreground">{formatCurrency(Number(dashboardData?.balance) || 0)}</span>
                     <ArrowRight className="h-4 w-4" />
                     <span className={`font-bold ${impact.newBalance < 0 ? 'text-red-500' : 'text-green-600'}`}>
                       {formatCurrency(impact.newBalance)}
@@ -391,14 +397,16 @@ export default function SimulationPage() {
                 )}
 
                 {/* Installment Recommendation */}
-                {dashboardData && parseFloat(purchaseValue) > 0 && (
+                {parseFloat(purchaseValue) > 0 && (
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-sm font-medium text-blue-700 mb-2">💡 Sugestão de Parcelas</p>
                     <p className="text-xs text-blue-600">
                       {(() => {
                         const value = parseFloat(purchaseValue);
-                        const freeBalance = dashboardData.balance * 0.3; // Max 30% of balance
-                        const ideal = Math.ceil(value / freeBalance);
+                        const balance = Number(dashboardData?.balance) || 0;
+                        const freeBalance = balance > 0 ? balance * 0.3 : value / 6; // Fallback to 6x if no balance
+                        const ideal = freeBalance > 0 ? Math.ceil(value / freeBalance) : 6;
+                        if (balance <= 0) return "Sem dados de saldo. Considere parcelar em 6x ou menos.";
                         if (ideal <= 1) return "Você pode pagar à vista sem comprometer seu orçamento.";
                         if (ideal <= 3) return `Parcele em ${ideal}x para manter conforto financeiro.`;
                         if (ideal <= 12) return `Sugerimos ${ideal}x para não impactar demais seu saldo.`;
