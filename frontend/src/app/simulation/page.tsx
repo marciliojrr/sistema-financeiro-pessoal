@@ -149,18 +149,21 @@ export default function SimulationPage() {
 
   // Tab 2: Scenario Comparison
   const getScenarioComparison = () => {
-    if (!dashboardData) return null;
+    // Create safe values even without dashboard data
+    const currentIncome = Number(dashboardData?.income) || 0;
+    const currentExpense = Number(dashboardData?.expense) || 0;
+    const currentBalance = currentIncome - currentExpense;
 
-    const newIncome = dashboardData.income + scenarioIncome;
-    const newExpense = dashboardData.expense + scenarioExpense + (scenarioNewDebt / 12);
+    const newIncome = currentIncome + (Number(scenarioIncome) || 0);
+    const newExpense = currentExpense + (Number(scenarioExpense) || 0) + ((Number(scenarioNewDebt) || 0) / 12);
     const newBalance = newIncome - newExpense;
-    const balanceDiff = newBalance - dashboardData.balance;
+    const balanceDiff = newBalance - currentBalance;
 
     return {
       current: {
-        income: dashboardData.income,
-        expense: dashboardData.expense,
-        balance: dashboardData.balance
+        income: currentIncome,
+        expense: currentExpense,
+        balance: currentBalance
       },
       projected: {
         income: newIncome,
@@ -168,8 +171,8 @@ export default function SimulationPage() {
         balance: newBalance
       },
       diff: {
-        income: scenarioIncome,
-        expense: scenarioExpense + (scenarioNewDebt / 12),
+        income: Number(scenarioIncome) || 0,
+        expense: (Number(scenarioExpense) || 0) + ((Number(scenarioNewDebt) || 0) / 12),
         balance: balanceDiff
       }
     };
@@ -439,15 +442,15 @@ export default function SimulationPage() {
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
                         <p className="text-xs text-muted-foreground">Receita</p>
-                        <p className="font-bold text-green-600">{formatCurrency(dashboardData?.income || 0)}</p>
+                        <p className="font-bold text-green-600">{formatCurrency(Number(dashboardData?.income) || 0)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Despesa</p>
-                        <p className="font-bold text-red-600">{formatCurrency(dashboardData?.expense || 0)}</p>
+                        <p className="font-bold text-red-600">{formatCurrency(Number(dashboardData?.expense) || 0)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Saldo</p>
-                        <p className="font-bold">{formatCurrency(dashboardData?.balance || 0)}</p>
+                        <p className="font-bold">{formatCurrency((Number(dashboardData?.income) || 0) - (Number(dashboardData?.expense) || 0))}</p>
                       </div>
                     </div>
                   </div>
