@@ -120,6 +120,11 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                                 📥 Importar Dados
                             </Button>
                         </Link>
+                        <Link href="/simulation" className="w-full col-span-3">
+                            <Button variant="outline" className="w-full text-xs">
+                                🧮 Simulação
+                            </Button>
+                        </Link>
                         <div className="col-span-3 border-t pt-4 mt-2">
                             <Button 
                                 variant="ghost" 
