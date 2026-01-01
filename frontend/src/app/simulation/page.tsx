@@ -29,7 +29,7 @@ import api from '@/services/api';
 type CardSuggestion = {
   card: {
     id: string;
-    name: string;
+    cardName: string;
     limit: number;
     closingDay: number;
     dueDay: number;
@@ -367,7 +367,7 @@ export default function SimulationPage() {
                         <CheckCircle2 className="h-5 w-5 text-green-600" />
                         <span className="font-bold text-green-700">Melhor Opção</span>
                       </div>
-                      <p className="font-semibold">{cardSuggestions.bestCard.card.name}</p>
+                      <p className="font-semibold">{cardSuggestions.bestCard.card.cardName}</p>
                       <p className="text-sm text-muted-foreground">
                         {cardSuggestions.bestCard.diffDays} dias até o vencimento
                       </p>
@@ -381,7 +381,7 @@ export default function SimulationPage() {
                         <p className="text-sm text-muted-foreground">Outras opções:</p>
                         {cardSuggestions.others.map((s, i) => (
                           <div key={i} className="p-2 border rounded text-sm">
-                            <p className="font-medium">{s.card.name}</p>
+                            <p className="font-medium">{s.card.cardName}</p>
                             <p className="text-xs text-muted-foreground">
                               {s.diffDays} dias • Limite: {formatCurrency(s.card.limit)}
                             </p>
