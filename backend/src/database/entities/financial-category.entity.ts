@@ -32,6 +32,10 @@ export class FinancialCategory {
   @Column({ default: false })
   isFixed: boolean;
 
+  // Keywords for auto-categorization (comma-separated)
+  @Column({ nullable: true, type: 'text' })
+  keywords: string;
+
   @OneToMany(() => FinancialMovement, (movement) => movement.category)
   financialMovements: FinancialMovement[];
 
@@ -41,3 +45,4 @@ export class FinancialCategory {
   @DeleteDateColumn()
   deletedAt?: Date;
 }
+

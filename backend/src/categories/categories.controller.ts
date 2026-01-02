@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -33,6 +34,18 @@ export class CategoriesController {
     return this.categoryService.findAll(req.user.userId);
   }
 
+  @Get('suggest')
+  async suggest(
+    @Query('description') description: string,
+    @Query('profileId') profileId: string,
+  ) {
+    const category = await this.categoryService.suggestCategory(
+      description,
+      profileId,
+    );
+    return category ? { suggested: true, category } : { suggested: false };
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoryService.findOne(id);
@@ -43,3 +56,4 @@ export class CategoriesController {
     return this.categoryService.remove(id, req.user.userId);
   }
 }
+

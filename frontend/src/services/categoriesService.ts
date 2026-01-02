@@ -5,6 +5,12 @@ export interface Category {
   name: string;
   type: 'INCOME' | 'EXPENSE';
   isFixed: boolean;
+  keywords?: string;
+}
+
+interface SuggestResponse {
+  suggested: boolean;
+  category?: Category;
 }
 
 export const categoriesService = {
@@ -20,18 +26,21 @@ export const categoriesService = {
     return response.data;
   },
 
-  update: async (id: string, data: Partial<Omit<Category, 'id'>>, profileId?: string): Promise<Category> => {
-    // Assuming backend might check profileId for permission or it's just payload. 
-    // If backend uses profileId from User object in Request, passing in body might be ignored or used for cross-check.
-    // However, create failed because DTO required it. UpdateDTO usually makes fields optional.
+  update: async (id: string, data: Partial<Omit<Category, 'id'>>): Promise<Category> => {
     const response = await api.patch<Category>(`/categories/${id}`, data);
     return response.data;
   },
 
-  delete: async (id: string, profileId?: string): Promise<void> => {
-    await api.delete(`/categories/${id}`, {
-        params: profileId ? { profileId } : {}
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/categories/${id}`);
+  },
+
+  suggest: async (description: string, profileId: string): Promise<SuggestResponse> => {
+    const response = await api.get<SuggestResponse>('/categories/suggest', {
+      params: { description, profileId },
     });
-  }
+    return response.data;
+  },
 };
+
 

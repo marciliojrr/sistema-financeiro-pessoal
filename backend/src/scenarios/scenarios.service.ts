@@ -229,4 +229,127 @@ export class ScenariosService {
       balance: income.minus(expense).toNumber(),
     };
   }
+
+  async getSmartSuggestions(
+    scenarioId: string,
+    userId: string,
+    purchaseAmount?: number,
+    installments?: number,
+  ) {
+    const comparison = await this.getComparison(scenarioId, userId);
+    const suggestions: {
+      type: 'warning' | 'info' | 'success' | 'tip';
+      icon: string;
+      title: string;
+      description: string;
+    }[] = [];
+
+    const scenarioBalance = comparison.scenario.balance;
+    const realBalance = comparison.real.balance;
+    const scenarioExpense = comparison.scenario.expense;
+    const realIncome = comparison.real.income;
+
+    // Rule 1: Check if scenario has negative balance
+    if (scenarioBalance < 0) {
+      suggestions.push({
+        type: 'warning',
+        icon: '⚠️',
+        title: 'Saldo Negativo',
+        description: `Este cenário resultaria em um saldo negativo de R$ ${Math.abs(scenarioBalance).toFixed(2)}.`,
+      });
+    }
+
+    // Rule 2: Check if expense increased significantly (>30%)
+    const expenseIncrease = scenarioExpense - comparison.real.expense;
+    const expenseIncreasePercent = comparison.real.expense > 0
+      ? (expenseIncrease / comparison.real.expense) * 100
+      : 0;
+
+    if (expenseIncreasePercent > 30) {
+      suggestions.push({
+        type: 'warning',
+        icon: '📈',
+        title: 'Aumento Significativo de Despesas',
+        description: `As despesas aumentariam ${expenseIncreasePercent.toFixed(0)}% em relação ao cenário real.`,
+      });
+    }
+
+    // Rule 3: If there's a purchase with installments, analyze impact
+    if (purchaseAmount && installments && installments > 1) {
+      const monthlyInstallment = purchaseAmount / installments;
+      const installmentPercent = realIncome > 0
+        ? (monthlyInstallment / realIncome) * 100
+        : 0;
+
+      if (installmentPercent > 30) {
+        suggestions.push({
+          type: 'warning',
+          icon: '💳',
+          title: 'Parcela Comprometedora',
+          description: `A parcela de R$ ${monthlyInstallment.toFixed(2)} representa ${installmentPercent.toFixed(0)}% da sua renda mensal.`,
+        });
+      } else if (installmentPercent > 15) {
+        suggestions.push({
+          type: 'info',
+          icon: '💡',
+          title: 'Parcela Significativa',
+          description: `A parcela de R$ ${monthlyInstallment.toFixed(2)} representa ${installmentPercent.toFixed(0)}% da sua renda. Considere alternativas.`,
+        });
+      }
+
+      // Suggest alternative installment options
+      if (installments < 24) {
+        const alternativeInstallments = installments + 6;
+        const alternativeMonthly = purchaseAmount / alternativeInstallments;
+        suggestions.push({
+          type: 'tip',
+          icon: '🔢',
+          title: 'Alternativa de Parcelamento',
+          description: `Em ${alternativeInstallments}x, a parcela seria R$ ${alternativeMonthly.toFixed(2)} (-${((monthlyInstallment - alternativeMonthly) / monthlyInstallment * 100).toFixed(0)}%).`,
+        });
+      }
+    }
+
+    // Rule 4: Check reserves impact
+    const balanceDiff = scenarioBalance - realBalance;
+    if (balanceDiff < -500) {
+      suggestions.push({
+        type: 'info',
+        icon: '🎯',
+        title: 'Impacto nas Reservas',
+        description: `Este cenário reduziria seu saldo em R$ ${Math.abs(balanceDiff).toFixed(2)}. Suas metas de reserva podem ser afetadas.`,
+      });
+    }
+
+    // Rule 5: Positive feedback if scenario is healthy
+    if (scenarioBalance > 0 && expenseIncreasePercent <= 10) {
+      suggestions.push({
+        type: 'success',
+        icon: '✅',
+        title: 'Cenário Saudável',
+        description: 'Este cenário parece viável financeiramente! Saldo positivo e despesas controladas.',
+      });
+    }
+
+    // Rule 6: Suggest waiting if balance is tight
+    if (scenarioBalance >= 0 && scenarioBalance < 200) {
+      suggestions.push({
+        type: 'tip',
+        icon: '⏳',
+        title: 'Aguarde o Próximo Mês',
+        description: 'Seu saldo ficaria apertado. Considere adiar essa decisão para o próximo mês.',
+      });
+    }
+
+    return {
+      comparison,
+      suggestions,
+      summary: {
+        totalSuggestions: suggestions.length,
+        warnings: suggestions.filter((s) => s.type === 'warning').length,
+        tips: suggestions.filter((s) => s.type === 'tip').length,
+      },
+    };
+  }
 }
+

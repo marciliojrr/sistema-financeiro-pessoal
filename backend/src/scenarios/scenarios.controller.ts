@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Delete,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -49,4 +50,20 @@ export class ScenariosController {
   getComparison(@Request() req, @Param('id') id: string) {
     return this.scenariosService.getComparison(id, req.user.userId);
   }
+
+  @Get(':id/suggestions')
+  getSmartSuggestions(
+    @Request() req,
+    @Param('id') id: string,
+    @Query('purchaseAmount') purchaseAmount?: string,
+    @Query('installments') installments?: string,
+  ) {
+    return this.scenariosService.getSmartSuggestions(
+      id,
+      req.user.userId,
+      purchaseAmount ? parseFloat(purchaseAmount) : undefined,
+      installments ? parseInt(installments, 10) : undefined,
+    );
+  }
 }
+
