@@ -120,6 +120,11 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                                 📥 Importar Dados
                             </Button>
                         </Link>
+                        <Link href="/export" className="w-full col-span-3">
+                            <Button variant="outline" className="w-full text-xs">
+                                📤 Exportar Dados
+                            </Button>
+                        </Link>
                         <Link href="/recurring" className="w-full col-span-3">
                             <Button variant="outline" className="w-full text-xs">
                                 🔄 Recorrentes
