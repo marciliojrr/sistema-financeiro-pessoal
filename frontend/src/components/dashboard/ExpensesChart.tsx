@@ -46,22 +46,24 @@ export function ExpensesChart({ data, loading }: ExpensesChartProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Despesas por Categoria</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Despesas por Categoria</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full min-w-0">
+        <div className="h-[350px] w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
+                cy="45%"
+                labelLine={true}
+                outerRadius={100}
+                innerRadius={40}
                 fill="#8884d8"
                 dataKey="amount"
                 nameKey="category"
+                label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -75,7 +77,7 @@ export function ExpensesChart({ data, loading }: ExpensesChartProps) {
                   return value;
                 }}
               />
-              <Legend />
+              <Legend wrapperStyle={{ paddingTop: '10px' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>

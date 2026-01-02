@@ -168,13 +168,11 @@ export default function DashboardPage() {
              </CardContent>
          </Card>
 
-         {/* Charts Section */}
+         {/* Charts Section - Stacked Layout */}
          <div className="space-y-4">
            <MonthlyEvolutionChart data={evolutionData} loading={loading} />
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <ExpensesChart data={chartData} loading={loading} />
-             <BudgetComparisonChart data={budgetData} loading={loading} />
-           </div>
+           <ExpensesChart data={chartData} loading={loading} />
+           <BudgetComparisonChart data={budgetData} loading={loading} />
          </div>
 
          {/* Free Spend & Reserves */}

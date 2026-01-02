@@ -30,13 +30,13 @@ export function BudgetComparisonChart({ data, loading }: BudgetComparisonChartPr
   if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Target className="h-4 w-4" />
             Orçamento vs Realizado
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-[200px] flex items-center justify-center">
+        <CardContent className="h-[280px] flex items-center justify-center">
           <Skeleton className="h-full w-full" />
         </CardContent>
       </Card>
@@ -46,15 +46,16 @@ export function BudgetComparisonChart({ data, loading }: BudgetComparisonChartPr
   if (!data || data.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Target className="h-4 w-4" />
             Orçamento vs Realizado
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground text-sm flex-col gap-2">
-          <p>Nenhum orçamento cadastrado.</p>
-          <p className="text-xs">Crie orçamentos para acompanhar seus gastos.</p>
+        <CardContent className="h-[280px] flex items-center justify-center text-muted-foreground text-sm flex-col gap-3">
+          <Target className="h-12 w-12 opacity-20" />
+          <p className="font-medium">Nenhum orçamento cadastrado</p>
+          <p className="text-xs text-center max-w-[200px]">Crie orçamentos na página de Orçamentos para acompanhar seus gastos por categoria.</p>
         </CardContent>
       </Card>
     );
@@ -72,7 +73,7 @@ export function BudgetComparisonChart({ data, loading }: BudgetComparisonChartPr
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px] w-full min-w-0">
+        <div className="h-[280px] w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart 
               data={chartData} 
