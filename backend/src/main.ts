@@ -27,6 +27,7 @@ async function bootstrap() {
       'http://localhost:3000',
       'http://192.168.0.19:3000',
       'http://localhost:3002',
+      'https://sistema-financeiro-pessoal-gamma.vercel.app',
     ],
     credentials: true,
   });
