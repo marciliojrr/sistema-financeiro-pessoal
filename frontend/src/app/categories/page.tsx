@@ -82,7 +82,7 @@ export default function CategoriesPage() {
 
         try {
             if (editingCategory) {
-                await categoriesService.update(editingCategory.id, formData, profileId);
+                await categoriesService.update(editingCategory.id, formData);
                 toast.success('Categoria atualizada com sucesso');
             } else {
                 await categoriesService.create(formData, profileId);
