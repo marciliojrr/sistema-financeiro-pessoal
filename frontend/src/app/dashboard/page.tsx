@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { dashboardService, DashboardSummary } from '@/services/dashboardService';
 import { transactionsService, Transaction } from '@/services/transactionsService';
 import { ExpensesChart } from '@/components/dashboard/ExpensesChart';
+import { MonthlyEvolutionChart } from '@/components/dashboard/MonthlyEvolutionChart';
+import { BudgetComparisonChart } from '@/components/dashboard/BudgetComparisonChart';
 import { toast } from 'sonner';
 import { ArrowDownIcon, ArrowUpIcon, Wallet, List } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
@@ -20,6 +22,8 @@ export default function DashboardPage() {
   const { userName } = useAuth();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [chartData, setChartData] = useState<{ category: string; amount: number }[]>([]);
+  const [evolutionData, setEvolutionData] = useState<{ month: string; year: number; income: number; expense: number; balance: number }[]>([]);
+  const [budgetData, setBudgetData] = useState<{ category: string; planned: number; actual: number; percentage: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [fixedExpenses, setFixedExpenses] = useState(0);
   const [reserves, setReserves] = useState<{ name: string; current: number; target: number; percentage: number }[]>([]);
@@ -32,18 +36,22 @@ export default function DashboardPage() {
         const month = currentDate.getMonth() + 1;
         const year = currentDate.getFullYear();
 
-        const [summary, expenses, fixed, reservesData, transactions] = await Promise.all([
+        const [summary, expenses, fixed, reservesData, transactions, evolution, budget] = await Promise.all([
            dashboardService.getSummary(),
            dashboardService.getExpensesByCategory(month, year),
            dashboardService.getFixedExpenses(month, year),
            dashboardService.getReservesProgress(),
-           transactionsService.getAll()
+           transactionsService.getAll(),
+           dashboardService.getMonthlyEvolution(6),
+           dashboardService.getBudgetPlanning(month, year),
         ]);
         
         setData(summary);
         setChartData(expenses);
         setFixedExpenses(fixed);
         setReserves(reservesData);
+        setEvolutionData(evolution);
+        setBudgetData(budget);
         // Filtrar parcelas de compras parceladas e pegar apenas as 5 mais recentes
         const filteredTransactions = transactions.filter(t => !t.installmentPurchaseId);
         setLatestTransactions(filteredTransactions.slice(0, 5));
@@ -161,7 +169,13 @@ export default function DashboardPage() {
          </Card>
 
          {/* Charts Section */}
-         <ExpensesChart data={chartData} loading={loading} />
+         <div className="space-y-4">
+           <MonthlyEvolutionChart data={evolutionData} loading={loading} />
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <ExpensesChart data={chartData} loading={loading} />
+             <BudgetComparisonChart data={budgetData} loading={loading} />
+           </div>
+         </div>
 
          {/* Free Spend & Reserves */}
          <div className="grid gap-4">

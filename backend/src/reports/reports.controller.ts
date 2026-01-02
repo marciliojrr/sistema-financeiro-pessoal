@@ -76,6 +76,19 @@ export class ReportsController {
     return this.reportsService.getReservesProgress(req.user.userId, profileId);
   }
 
+  @Get('monthly-evolution')
+  async getMonthlyEvolution(
+    @Req() req,
+    @Query('months') months?: number,
+    @Query('profileId') profileId?: string,
+  ) {
+    return this.reportsService.getMonthlyEvolution(
+      req.user.userId,
+      months || 6,
+      profileId,
+    );
+  }
+
   @Get('export/csv')
   async exportCsv(
     @Req() req,

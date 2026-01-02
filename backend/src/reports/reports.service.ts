@@ -195,6 +195,31 @@ export class ReportsService {
     });
   }
 
+  async getMonthlyEvolution(userId: string, months: number = 6, profileId?: string) {
+    const result: { month: string; year: number; income: number; expense: number; balance: number }[] = [];
+    const now = new Date();
+    
+    for (let i = months - 1; i >= 0; i--) {
+      const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const month = targetDate.getMonth() + 1;
+      const year = targetDate.getFullYear();
+      
+      const balance = await this.getMonthlyBalance(userId, month, year, profileId);
+      
+      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      
+      result.push({
+        month: monthNames[month - 1],
+        year,
+        income: balance.totalIncome,
+        expense: balance.totalExpense,
+        balance: balance.balance,
+      });
+    }
+    
+    return result;
+  }
+
   async exportData(userId: string, profileId?: string) {
     const query = this.movementRepository
       .createQueryBuilder('movement')
