@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Plus, Tag, Trash2, Edit, X } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Plus, Tag, Trash2 } from 'lucide-react';
 import { categoriesService, Category } from '@/services/categoriesService';
 import { toast } from 'sonner';
 import {
@@ -15,7 +14,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +21,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 
 export default function CategoriesPage() {
-    const router = useRouter();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -99,9 +96,8 @@ export default function CategoriesPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
-        const profileId = localStorage.getItem('profileId');
         try {
-            await categoriesService.delete(id, profileId || undefined);
+            await categoriesService.delete(id);
             toast.success('Categoria excluída com sucesso');
             fetchCategories();
         } catch (error) {
