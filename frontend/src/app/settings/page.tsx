@@ -26,13 +26,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { 
   Settings, 
@@ -40,10 +33,7 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  Star,
-  Shield,
-  Eye,
-  PenLine
+  Star
 } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
@@ -52,15 +42,8 @@ import api from '@/services/api';
 interface Profile {
   id: string;
   name: string;
-  role: 'admin' | 'editor' | 'viewer';
   active: boolean;
 }
-
-const roleConfig = {
-  admin: { label: 'Administrador', icon: Shield, color: 'bg-green-100 text-green-700 border-green-200' },
-  editor: { label: 'Editor', icon: PenLine, color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  viewer: { label: 'Visualizador', icon: Eye, color: 'bg-gray-100 text-gray-700 border-gray-200' },
-};
 
 export default function SettingsPage() {
   const { profiles, currentProfileId, setProfile, isLoading, refreshProfiles } = useProfile();
@@ -74,7 +57,6 @@ export default function SettingsPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    role: 'admin' as 'admin' | 'editor' | 'viewer',
   });
 
   const handleCreateOrUpdate = async () => {
@@ -88,13 +70,11 @@ export default function SettingsPage() {
       if (editingProfile) {
         await api.put(`/profiles/${editingProfile.id}`, {
           name: formData.name,
-          role: formData.role,
         });
         toast.success('Perfil atualizado!');
       } else {
         await api.post('/profiles', {
           name: formData.name,
-          role: formData.role,
           active: true,
         });
         toast.success('Perfil criado com sucesso!');
@@ -132,7 +112,7 @@ export default function SettingsPage() {
 
   const openEditDialog = (profile: Profile) => {
     setEditingProfile(profile);
-    setFormData({ name: profile.name, role: profile.role });
+    setFormData({ name: profile.name });
     setIsDialogOpen(true);
   };
 
@@ -148,7 +128,7 @@ export default function SettingsPage() {
 
   const resetForm = () => {
     setEditingProfile(null);
-    setFormData({ name: '', role: 'admin' });
+    setFormData({ name: '' });
   };
 
   return (
@@ -221,8 +201,6 @@ export default function SettingsPage() {
               </div>
             ) : (
               profiles.map((profile) => {
-                const config = roleConfig[profile.role as keyof typeof roleConfig] || roleConfig.admin;
-                const RoleIcon = config.icon;
                 const isDefault = profile.id === currentProfileId;
                 
                 return (
@@ -232,17 +210,14 @@ export default function SettingsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${config.color}`}>
-                          <RoleIcon className="h-4 w-4" />
+                        <div className="p-2 rounded-full bg-gray-100">
+                          <User className="h-4 w-4 text-gray-600" />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{profile.name}</span>
-                            {isDefault && (
-                              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground">{config.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{profile.name}</span>
+                          {isDefault && (
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -251,7 +226,7 @@ export default function SettingsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => handleSetDefault(profile)}
+                            onClick={() => handleSetDefault(profile as Profile)}
                             title="Definir como padrão"
                           >
                             <Star className="h-4 w-4" />
@@ -261,7 +236,7 @@ export default function SettingsPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => openEditDialog(profile)}
+                          onClick={() => openEditDialog(profile as Profile)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -270,7 +245,7 @@ export default function SettingsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => openDeleteDialog(profile)}
+                            onClick={() => openDeleteDialog(profile as Profile)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -294,7 +269,7 @@ export default function SettingsPage() {
             </DialogTitle>
             <DialogDescription>
               {editingProfile 
-                ? 'Atualize as informações do perfil.'
+                ? 'Atualize o nome do perfil.'
                 : 'Crie um novo perfil para organizar suas finanças.'}
             </DialogDescription>
           </DialogHeader>
@@ -308,40 +283,6 @@ export default function SettingsPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Permissão</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value: 'admin' | 'editor' | 'viewer') => 
-                  setFormData({ ...formData, role: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Administrador - Controle total
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="editor">
-                    <div className="flex items-center gap-2">
-                      <PenLine className="h-4 w-4" />
-                      Editor - Pode editar
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="viewer">
-                    <div className="flex items-center gap-2">
-                      <Eye className="h-4 w-4" />
-                      Visualizador - Apenas leitura
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
