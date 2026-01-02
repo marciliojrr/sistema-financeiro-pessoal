@@ -17,10 +17,13 @@ import { ArrowDownIcon, ArrowUpIcon, Wallet, List } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
 
 import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { ProfileSwitcher } from '@/components/ProfileSwitcher';
+import { ProfileNotificationModal } from '@/components/ProfileNotificationModal';
 
 export default function DashboardPage() {
   const { userName } = useAuth();
+  const { profiles, currentProfileId, isLoading: profileLoading } = useProfile();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [chartData, setChartData] = useState<{ category: string; amount: number }[]>([]);
   const [evolutionData, setEvolutionData] = useState<{ month: string; year: number; income: number; expense: number; balance: number }[]>([]);
@@ -29,6 +32,18 @@ export default function DashboardPage() {
   const [fixedExpenses, setFixedExpenses] = useState(0);
   const [reserves, setReserves] = useState<{ name: string; current: number; target: number; percentage: number }[]>([]);
   const [latestTransactions, setLatestTransactions] = useState<Transaction[]>([]);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // Show profile notification on first visit after login
+  useEffect(() => {
+    const hasShownProfileNotification = sessionStorage.getItem('profileNotificationShown');
+    if (!hasShownProfileNotification && !profileLoading && currentProfileId) {
+      setShowProfileModal(true);
+      sessionStorage.setItem('profileNotificationShown', 'true');
+    }
+  }, [profileLoading, currentProfileId]);
+
+  const activeProfileName = profiles.find(p => p.id === currentProfileId)?.name || 'Principal';
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -263,6 +278,13 @@ export default function DashboardPage() {
              </Card>
          </div>
       </div>
+
+      {/* Profile Notification Modal - shows after login */}
+      <ProfileNotificationModal
+        profileName={activeProfileName}
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
     </MobileLayout>
   );
 }
