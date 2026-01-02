@@ -43,4 +43,5 @@ export const categoriesService = {
   },
 };
 
-
+// Type alias for backward compatibility
+export type FinancialCategory = Category;

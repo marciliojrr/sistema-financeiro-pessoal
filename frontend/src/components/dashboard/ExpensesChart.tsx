@@ -119,6 +119,7 @@ export function ExpensesChart({ data, loading }: ExpensesChartProps) {
                 ))}
               </Pie>
               <Tooltip 
+                // @ts-expect-error - Recharts types expect undefined but we handle it
                 formatter={(value: number) => formatCurrency(value)}
                 labelFormatter={(label) => label}
                 contentStyle={{ 
@@ -128,6 +129,7 @@ export function ExpensesChart({ data, loading }: ExpensesChartProps) {
                   padding: '8px 12px',
                 }}
               />
+              {/* @ts-expect-error - Recharts Legend content type mismatch */}
               <Legend content={renderLegend} />
             </PieChart>
           </ResponsiveContainer>

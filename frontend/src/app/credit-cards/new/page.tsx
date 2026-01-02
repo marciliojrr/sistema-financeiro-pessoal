@@ -114,7 +114,7 @@ export default function NewCreditCardPage() {
                                 onValueChange={(val) => form.setValue('limit', val || '')} 
                                 value={form.getValues('limit')}
                             />
-                            {form.formState.errors.limit && <p className="text-sm text-red-500">{form.formState.errors.limit.message}</p>}
+                            {form.formState.errors.limit && <p className="text-sm text-red-500">{form.formState.errors.limit.message?.toString()}</p>}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

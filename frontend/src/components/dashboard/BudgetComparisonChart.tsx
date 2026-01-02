@@ -97,8 +97,9 @@ export function BudgetComparisonChart({ data, loading }: BudgetComparisonChartPr
                 axisLine={false}
               />
               <Tooltip 
+                // @ts-expect-error - Recharts types expect undefined but we handle it
                 formatter={(value: number, name: string) => [
-                  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value),
+                  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value ?? 0),
                   name === 'planned' ? 'Planejado' : 'Realizado'
                 ]}
                 contentStyle={{ 

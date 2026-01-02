@@ -1,11 +1,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import api from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (token: string, userId: string, userName: string) => void;
+  login: (token: string, userId: string, userName: string, profileId?: string) => void;
   logout: () => void;
   loading: boolean;
   userName: string | null;

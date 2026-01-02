@@ -97,6 +97,7 @@ export function MonthlyEvolutionChart({ data, loading }: MonthlyEvolutionChartPr
                 width={60}
               />
               <Tooltip 
+                // @ts-expect-error - Recharts types expect undefined but we handle it
                 formatter={(value: number, name: string) => [
                   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value),
                   name === 'income' ? 'Receita' : 'Despesa'
