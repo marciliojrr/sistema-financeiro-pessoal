@@ -65,6 +65,12 @@ export class CreditCardController {
     return this.creditCardsService.findOne(id, req.user.userId);
   }
 
+  @Get(':id/invoices')
+  @ApiOperation({ summary: 'Lista faturas de um cartão' })
+  getInvoices(@Param('id') id: string, @Req() req) {
+    return this.creditCardsService.getInvoices(id, req.user.userId);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string, @Req() req) {
     return this.creditCardsService.remove(id, req.user.userId);

@@ -101,6 +101,11 @@ export const creditCardsService = {
   // It lacks `getInvoices`. I'll have to add it to Frontend service tentatively, but I might fail if backend doesn't support.
   // Let's implement what IS there first.
 
+  getInvoices: async (cardId: string) => {
+    const response = await api.get<CreditCardInvoice[]>(`/credit-cards/${cardId}/invoices`);
+    return response.data;
+  },
+
   closeInvoice: async (cardId: string, year: number, month: number) => {
     const response = await api.post(`/credit-cards/${cardId}/invoices/close`, { year, month });
     return response.data;
