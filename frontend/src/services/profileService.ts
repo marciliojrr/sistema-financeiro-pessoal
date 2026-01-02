@@ -8,6 +8,11 @@ export interface Profile {
 }
 
 export const profileService = {
+  getAll: async (): Promise<Profile[]> => {
+    const response = await api.get<Profile[]>('/profiles');
+    return response.data;
+  },
+
   getByUserId: async (userId: string): Promise<Profile> => {
     // Assuming there's an endpoint to get profiles by userId or getting 'me'
     // If not, we might need to filter profiles.
