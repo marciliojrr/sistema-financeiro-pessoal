@@ -17,6 +17,7 @@ import { ArrowDownIcon, ArrowUpIcon, Wallet, List } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
 
 import { useAuth } from '@/hooks/useAuth';
+import { ProfileSwitcher } from '@/components/ProfileSwitcher';
 
 export default function DashboardPage() {
   const { userName } = useAuth();
@@ -83,7 +84,10 @@ export default function DashboardPage() {
   return (
     <MobileLayout>
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">{getGreeting()}, {userName?.split(' ')[0] || 'Visitante'} 👋</h1>
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-2xl font-bold tracking-tight">{getGreeting()}, {userName?.split(' ')[0] || 'Visitante'} 👋</h1>
+          <ProfileSwitcher />
+        </div>
         <p className="text-muted-foreground">Aqui está seu resumo financeiro de {data ? `${data.currentMonth}/${data.currentYear}` : '...'}.</p>
       </header>
       
