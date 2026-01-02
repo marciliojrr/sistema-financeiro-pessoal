@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from '../database/entities/notification.entity';
 import { CreateNotificationDto } from './dto/create-notification.dto';
+import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { Profile } from '../database/entities/profile.entity';
 
 @Injectable()
@@ -81,5 +82,35 @@ export class NotificationsService {
     }
 
     return { message: 'Todas as notificações marcadas como lidas.' };
+  }
+
+  async update(id: string, userId: string, dto: UpdateNotificationDto) {
+    const notification = await this.notificationRepository.findOne({
+      where: { id },
+      relations: ['profile', 'profile.user'],
+    });
+
+    if (!notification)
+      throw new NotFoundException('Notificação não encontrada.');
+    if (notification.profile.user.id !== userId)
+      throw new ForbiddenException('Acesso negado.');
+
+    Object.assign(notification, dto);
+    return this.notificationRepository.save(notification);
+  }
+
+  async delete(id: string, userId: string) {
+    const notification = await this.notificationRepository.findOne({
+      where: { id },
+      relations: ['profile', 'profile.user'],
+    });
+
+    if (!notification)
+      throw new NotFoundException('Notificação não encontrada.');
+    if (notification.profile.user.id !== userId)
+      throw new ForbiddenException('Acesso negado.');
+
+    await this.notificationRepository.remove(notification);
+    return { message: 'Notificação excluída com sucesso.' };
   }
 }

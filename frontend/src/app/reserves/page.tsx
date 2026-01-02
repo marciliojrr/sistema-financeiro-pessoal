@@ -176,7 +176,7 @@ export default function ReservesPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <PiggyBank className="h-6 w-6" />
               Minhas Reservas
             </h1>

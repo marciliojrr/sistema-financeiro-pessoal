@@ -28,6 +28,7 @@ import {
   Plus, 
   RefreshCw, 
   Calendar,
+  Repeat,
   Trash2,
   Edit,
   Pause,
@@ -215,13 +216,16 @@ export default function RecurringTransactionsPage() {
     <MobileLayout>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Transações Recorrentes</h1>
-            <p className="text-sm text-muted-foreground">
-              Gerencie receitas e despesas automáticas
-            </p>
-          </div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Repeat className="h-6 w-6" />
+            Transações Recorrentes
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie suas despesas e receitas fixas
+          </p>
+        </div>
           <Button onClick={openCreateDialog}>
             <Plus className="h-4 w-4 mr-2" />
             Nova

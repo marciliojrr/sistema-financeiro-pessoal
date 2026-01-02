@@ -135,6 +135,11 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                                 🧮 Simulação
                             </Button>
                         </Link>
+                        <Link href="/backup" className="w-full col-span-3">
+                            <Button variant="outline" className="w-full text-xs">
+                                🔒 Backup
+                            </Button>
+                        </Link>
                         <Link href="/settings" className="w-full col-span-3">
                             <Button variant="outline" className="w-full text-xs">
                                 ⚙️ Configurações

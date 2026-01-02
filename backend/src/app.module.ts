@@ -28,6 +28,7 @@ import { ScenariosModule } from './scenarios/scenarios.module';
 import { ImportsModule } from './imports/imports.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ImportsModule,
     AuditLogsModule,
     DashboardModule,
+    BackupModule,
 
     // Agendamento de Tarefas (Cron)
     ScheduleModule.forRoot(),

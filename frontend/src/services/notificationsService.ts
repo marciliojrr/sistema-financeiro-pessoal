@@ -9,6 +9,20 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface CreateNotificationDto {
+  profileId: string;
+  title: string;
+  message: string;
+  type: string;
+}
+
+export interface UpdateNotificationDto {
+  title?: string;
+  message?: string;
+  type?: string;
+  read?: boolean;
+}
+
 export const notificationsService = {
   getAll: async (read?: boolean): Promise<Notification[]> => {
     const params: Record<string, string> = {};
@@ -16,6 +30,21 @@ export const notificationsService = {
       params.read = String(read);
     }
     const response = await api.get<Notification[]>('/notifications', { params });
+    return response.data;
+  },
+
+  create: async (dto: CreateNotificationDto): Promise<Notification> => {
+    const response = await api.post<Notification>('/notifications', dto);
+    return response.data;
+  },
+
+  update: async (id: string, dto: UpdateNotificationDto): Promise<Notification> => {
+    const response = await api.patch<Notification>(`/notifications/${id}`, dto);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<{ message: string }> => {
+    const response = await api.delete<{ message: string }>(`/notifications/${id}`);
     return response.data;
   },
 
@@ -29,7 +58,6 @@ export const notificationsService = {
     return response.data;
   },
 
-  // Helper to get unread count
   getUnreadCount: async (): Promise<number> => {
     const notifications = await notificationsService.getAll(false);
     return notifications.length;
