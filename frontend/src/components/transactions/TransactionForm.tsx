@@ -55,6 +55,7 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
   const [categories, setCategories] = useState<Category[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(false);
+  const [suggestedCategory, setSuggestedCategory] = useState<Category | null>(null);
 
   const form = useForm<TransactionFormData & { paymentMethod: 'CASH' | 'CREDIT_CARD', creditCardId?: string, installments?: number }>({
     resolver: zodResolver(transactionSchema),
@@ -190,9 +191,49 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
             id="description" 
             placeholder="Ex: Salário, Mercado..." 
             {...form.register('description')} 
+            onChange={(e) => {
+              form.setValue('description', e.target.value);
+              // Debounce auto-suggest
+              const value = e.target.value;
+              if (value.length >= 3) {
+                const profileId = localStorage.getItem('profileId') || localStorage.getItem('userId');
+                if (profileId) {
+                  clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>).__suggestTimeout);
+                  (window as unknown as Record<string, ReturnType<typeof setTimeout>>).__suggestTimeout = setTimeout(async () => {
+                    try {
+                      const result = await categoriesService.suggest(value, profileId);
+                      if (result.suggested && result.category) {
+                        setSuggestedCategory(result.category);
+                      } else {
+                        setSuggestedCategory(null);
+                      }
+                    } catch {
+                      setSuggestedCategory(null);
+                    }
+                  }, 500);
+                }
+              } else {
+                setSuggestedCategory(null);
+              }
+            }}
         />
         {form.formState.errors.description && (
             <p className="text-sm text-red-500">{form.formState.errors.description?.message}</p>
+        )}
+        {suggestedCategory && (
+          <div 
+            className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md cursor-pointer hover:bg-green-100 transition-colors"
+            onClick={() => {
+              form.setValue('categoryId', suggestedCategory.id);
+              setSuggestedCategory(null);
+              toast.success(`Categoria "${suggestedCategory.name}" selecionada!`);
+            }}
+          >
+            <p className="text-sm text-green-700">
+              💡 Sugestão: <strong>{suggestedCategory.name}</strong>
+              <span className="text-xs ml-2 text-green-600">(clique para aplicar)</span>
+            </p>
+          </div>
         )}
       </div>
 

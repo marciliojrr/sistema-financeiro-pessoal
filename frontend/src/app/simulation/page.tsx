@@ -80,6 +80,14 @@ export default function SimulationPage() {
     months: number;
   } | null>(null);
 
+  // State for Smart Suggestions
+  const [smartSuggestions, setSmartSuggestions] = useState<{
+    type: 'warning' | 'info' | 'success' | 'tip';
+    icon: string;
+    title: string;
+    description: string;
+  }[]>([]);
+
   const formatCurrency = (value: number | undefined | null) => {
     const safeValue = Number(value);
     if (isNaN(safeValue)) return 'R$ 0,00';
@@ -117,11 +125,84 @@ export default function SimulationPage() {
     }
 
     setLoadingCards(true);
+    setSmartSuggestions([]);
+    
     try {
       const response = await api.get('/credit-cards/recommendation', {
         params: { amount: value }
       });
       setCardSuggestions(response.data);
+
+      // Generate smart suggestions based on impact
+      const numInstallments = parseInt(installments) || 1;
+      const monthlyImpact = value / numInstallments;
+      const income = Number(dashboardData?.income) || 0;
+      const currentBalance = Number(dashboardData?.balance) || 0;
+      const newBalance = currentBalance - monthlyImpact;
+      const percentOfIncome = income > 0 ? (monthlyImpact / income) * 100 : 0;
+
+      const suggestions: typeof smartSuggestions = [];
+
+      // Rule 1: Check if balance goes negative
+      if (newBalance < 0) {
+        suggestions.push({
+          type: 'warning',
+          icon: '⚠️',
+          title: 'Saldo Negativo',
+          description: `Esta compra deixaria seu saldo mensal em R$ ${newBalance.toFixed(2)}.`,
+        });
+      }
+
+      // Rule 2: Check percentage of income
+      if (percentOfIncome > 30) {
+        suggestions.push({
+          type: 'warning',
+          icon: '💳',
+          title: 'Parcela Comprometedora',
+          description: `A parcela de R$ ${monthlyImpact.toFixed(2)} representa ${percentOfIncome.toFixed(0)}% da sua renda.`,
+        });
+      } else if (percentOfIncome > 15) {
+        suggestions.push({
+          type: 'info',
+          icon: '💡',
+          title: 'Parcela Significativa',
+          description: `A parcela representa ${percentOfIncome.toFixed(0)}% da sua renda. Considere mais parcelas.`,
+        });
+      }
+
+      // Rule 3: Suggest alternative installments
+      if (numInstallments < 18 && percentOfIncome > 10) {
+        const altInstallments = Math.min(numInstallments + 6, 24);
+        const altMonthly = value / altInstallments;
+        suggestions.push({
+          type: 'tip',
+          icon: '🔢',
+          title: 'Alternativa de Parcelamento',
+          description: `Em ${altInstallments}x: R$ ${altMonthly.toFixed(2)}/mês (-${((monthlyImpact - altMonthly) / monthlyImpact * 100).toFixed(0)}%)`,
+        });
+      }
+
+      // Rule 4: Positive feedback
+      if (newBalance > 0 && percentOfIncome <= 15) {
+        suggestions.push({
+          type: 'success',
+          icon: '✅',
+          title: 'Compra Viável',
+          description: 'Esta compra parece caber no seu orçamento atual!',
+        });
+      }
+
+      // Rule 5: Low balance warning
+      if (newBalance >= 0 && newBalance < 200) {
+        suggestions.push({
+          type: 'tip',
+          icon: '⏳',
+          title: 'Saldo Apertado',
+          description: 'Seu saldo ficaria baixo após esta compra. Considere aguardar.',
+        });
+      }
+
+      setSmartSuggestions(suggestions);
     } catch (error) {
       console.error('Failed to get card suggestions', error);
       toast.error('Erro ao buscar sugestões de cartão');
@@ -418,6 +499,51 @@ export default function SimulationPage() {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Smart Suggestions */}
+          {smartSuggestions.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  💡 Sugestões Inteligentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {smartSuggestions.map((suggestion, idx) => {
+                  const bgColors = {
+                    warning: 'bg-red-50 border-red-200',
+                    info: 'bg-blue-50 border-blue-200',
+                    success: 'bg-green-50 border-green-200',
+                    tip: 'bg-amber-50 border-amber-200',
+                  };
+                  const textColors = {
+                    warning: 'text-red-700',
+                    info: 'text-blue-700',
+                    success: 'text-green-700',
+                    tip: 'text-amber-700',
+                  };
+                  return (
+                    <div 
+                      key={idx}
+                      className={`p-3 rounded-lg border ${bgColors[suggestion.type]}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg">{suggestion.icon}</span>
+                        <div>
+                          <p className={`font-semibold ${textColors[suggestion.type]}`}>
+                            {suggestion.title}
+                          </p>
+                          <p className={`text-sm ${textColors[suggestion.type]} opacity-80`}>
+                            {suggestion.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           )}
