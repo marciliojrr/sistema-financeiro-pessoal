@@ -3,14 +3,17 @@ import api from './api';
 export interface Debt {
   id: string;
   description: string;
-  totalAmount: number; // Valor Total da Dívida
+  totalAmount: number;
   totalInstallments: number;
-  paidInstallments: number; // Computed?
-  outstandingAmount: number; // Computed?
+  paidInstallments: number;
+  remainingAmount: number;
+  outstandingAmount: number;
   startDate: string;
   dueDateDay: number;
   profileId: string;
   categoryId?: string;
+  active?: boolean;
+  interestRate?: number;
 }
 
 export interface CreateDebtDto {
@@ -39,5 +42,15 @@ export const debtsService = {
   delete: async (id: string) => {
     const profileId = localStorage.getItem('profileId') || localStorage.getItem('userId');
     await api.delete(`/debts/${id}`, { params: { profileId } });
+  },
+
+  getOne: async (id: string) => {
+    const response = await api.get<Debt>(`/debts/${id}`);
+    return response.data;
+  },
+
+  update: async (id: string, data: Partial<CreateDebtDto>) => {
+    const response = await api.patch<Debt>(`/debts/${id}`, data);
+    return response.data;
   }
 };
