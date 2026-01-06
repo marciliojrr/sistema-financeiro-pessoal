@@ -148,19 +148,19 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <Bell className="h-6 w-6" />
-              Notificações
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {unreadCount > 0 ? `${unreadCount} não lida${unreadCount > 1 ? 's' : ''}` : 'Todas lidas'}
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Bell className="h-6 w-6" />
+            Notificações
+            {unreadCount > 0 && (
+              <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </h1>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => setFormOpen(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              Nova
+              Novo
             </Button>
             {unreadCount > 0 && (
               <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>

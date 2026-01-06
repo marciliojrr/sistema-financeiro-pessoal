@@ -786,7 +786,7 @@ export default function SimulationPage() {
                   )
                 ) : (
                   <div className="space-y-3">
-                    <div className="text-center p-4 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-lg">
+                    <div className="text-center p-4 bg-linear-to-br from-green-500 to-emerald-600 text-white rounded-lg">
                       <p className="text-sm opacity-80">Valor Final em {calcResult.months} meses</p>
                       <p className="text-2xl font-bold">{formatCurrency(calcResult.finalValue)}</p>
                     </div>

@@ -7,11 +7,12 @@ import { Profile } from '../database/entities/profile.entity';
 import { FinancialCategory } from '../database/entities/financial-category.entity';
 import { BudgetsModule } from '../budgets/budgets.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { Account } from '../database/entities/account.entity';
 import { DebtsModule } from '../debts/debts.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FinancialMovement, Profile, FinancialCategory]),
+    TypeOrmModule.forFeature([FinancialMovement, Profile, FinancialCategory, Account]),
     BudgetsModule,
     NotificationsModule,
     DebtsModule,

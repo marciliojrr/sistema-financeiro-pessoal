@@ -5,7 +5,7 @@ import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plus, Tag, Trash2 } from 'lucide-react';
-import { categoriesService, Category } from '@/services/categoriesService';
+import { categoriesService, Category, IncomeSource } from '@/services/categoriesService';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -30,7 +30,8 @@ export default function CategoriesPage() {
     const [formData, setFormData] = useState({
         name: '',
         type: 'EXPENSE' as 'INCOME' | 'EXPENSE',
-        isFixed: false
+        isFixed: false,
+        incomeSource: undefined as IncomeSource | undefined,
     });
 
     const fetchCategories = async () => {
@@ -51,7 +52,7 @@ export default function CategoriesPage() {
     }, []);
 
     const resetForm = () => {
-        setFormData({ name: '', type: 'EXPENSE', isFixed: false });
+        setFormData({ name: '', type: 'EXPENSE', isFixed: false, incomeSource: undefined });
         setEditingCategory(null);
     };
 
@@ -61,7 +62,8 @@ export default function CategoriesPage() {
             setFormData({
                 name: category.name,
                 type: category.type,
-                isFixed: category.isFixed
+                isFixed: category.isFixed,
+                incomeSource: category.incomeSource,
             });
         } else {
             resetForm();
@@ -201,6 +203,28 @@ export default function CategoriesPage() {
                                 <Label htmlFor="isFixed">Fixa/Recorrente</Label>
                             </div>
                         </div>
+
+                        {formData.type === 'INCOME' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="incomeSource">Fonte de Renda</Label>
+                                <Select
+                                    value={formData.incomeSource || ''}
+                                    onValueChange={(value: IncomeSource) => setFormData({...formData, incomeSource: value})}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a fonte" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="SALARY">Salário CLT</SelectItem>
+                                        <SelectItem value="SCHOLARSHIP">Bolsa de Estudos</SelectItem>
+                                        <SelectItem value="FREELANCE">Freelance</SelectItem>
+                                        <SelectItem value="INVESTMENT">Investimentos</SelectItem>
+                                        <SelectItem value="OTHER">Outro</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
                         <DialogFooter>
                              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                             <Button type="submit">Salvar</Button>

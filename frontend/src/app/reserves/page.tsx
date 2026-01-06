@@ -174,18 +174,15 @@ export default function ReservesPage() {
     <MobileLayout>
       {/* Header with summary */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <PiggyBank className="h-6 w-6" />
-              Minhas Reservas
-            </h1>
-            <p className="text-muted-foreground text-sm">Gerencie suas metas financeiras</p>
-          </div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <PiggyBank className="h-6 w-6" />
+            Reservas
+          </h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => handleOpenDialog()}>
-                <Plus className="mr-2 h-4 w-4" /> Nova
+                <Plus className="mr-2 h-4 w-4" /> Novo
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -271,7 +268,7 @@ export default function ReservesPage() {
         </div>
 
         {/* Summary Card */}
-        <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-0">
+        <Card className="bg-linear-to-br from-emerald-500 to-teal-600 text-white border-0">
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
               <div>

@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { 
   Plus, 
@@ -75,6 +76,7 @@ export default function RecurringTransactionsPage() {
     startDate: new Date().toISOString().split('T')[0],
     categoryId: '',
     profileId: '',
+    skipPastRuns: false,
   });
 
   useEffect(() => {
@@ -180,6 +182,7 @@ export default function RecurringTransactionsPage() {
       startDate: new Date().toISOString().split('T')[0],
       categoryId: '',
       profileId: profiles[0]?.id || '',
+      skipPastRuns: false,
     });
   };
 
@@ -216,19 +219,14 @@ export default function RecurringTransactionsPage() {
     <MobileLayout>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Repeat className="h-6 w-6" />
-            Transações Recorrentes
+            Recorrentes
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie suas despesas e receitas fixas
-          </p>
-        </div>
           <Button onClick={openCreateDialog}>
             <Plus className="h-4 w-4 mr-2" />
-            Nova
+            Novo
           </Button>
         </div>
 
@@ -460,6 +458,22 @@ export default function RecurringTransactionsPage() {
                   value={formData.endDate || ''}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value || undefined })}
                 />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3 bg-muted/50 p-3 rounded-lg">
+              <Switch
+                id="skipPastRuns"
+                checked={formData.skipPastRuns || false}
+                onCheckedChange={(checked) => setFormData({ ...formData, skipPastRuns: checked })}
+              />
+              <div>
+                <Label htmlFor="skipPastRuns" className="cursor-pointer">
+                  Conta já existe (não gerar retroativos)
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Marque se esta recorrência já existia antes de hoje
+                </p>
               </div>
             </div>
 

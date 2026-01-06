@@ -34,6 +34,7 @@ export interface CreateRecurringTransactionDto {
   categoryId: string;
   profileId: string;
   reserveId?: string;
+  skipPastRuns?: boolean;
 }
 
 export interface UpdateRecurringTransactionDto extends Partial<CreateRecurringTransactionDto> {

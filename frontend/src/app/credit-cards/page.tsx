@@ -71,7 +71,7 @@ export default function CreditCardsPage() {
                     {cards.map((card) => (
                         <Link href={`/credit-cards/${card.id}`} key={card.id} className="block transition-transform hover:scale-[1.02]">
                             <Card className="overflow-hidden cursor-pointer h-full">
-                                <CardHeader className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4">
+                                <CardHeader className="bg-linear-to-r from-slate-900 to-slate-800 text-white p-4">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <CardTitle className="text-lg">{card.cardName}</CardTitle>

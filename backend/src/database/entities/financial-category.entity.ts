@@ -10,6 +10,14 @@ import { Profile } from './profile.entity';
 import { FinancialMovement } from './financial-movement.entity';
 import { Budget } from './budget.entity';
 
+export enum IncomeSource {
+  SALARY = 'SALARY',
+  SCHOLARSHIP = 'SCHOLARSHIP',
+  FREELANCE = 'FREELANCE',
+  INVESTMENT = 'INVESTMENT',
+  OTHER = 'OTHER',
+}
+
 @Entity()
 export class FinancialCategory {
   @PrimaryGeneratedColumn('uuid')
@@ -36,6 +44,14 @@ export class FinancialCategory {
   @Column({ nullable: true, type: 'text' })
   keywords: string;
 
+  // Fonte de renda (apenas para categorias de receita)
+  @Column({
+    type: 'enum',
+    enum: IncomeSource,
+    nullable: true,
+  })
+  incomeSource: IncomeSource | null;
+
   @OneToMany(() => FinancialMovement, (movement) => movement.category)
   financialMovements: FinancialMovement[];
 
@@ -45,4 +61,3 @@ export class FinancialCategory {
   @DeleteDateColumn()
   deletedAt?: Date;
 }
-

@@ -1,11 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, CreditCard, PieChart, Plus, Wallet, Menu, LogOut } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, CreditCard, Plus, Wallet, ArrowLeftRight, MoreHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
 import {
   Drawer,
   DrawerContent,
@@ -13,7 +13,10 @@ import {
   DrawerTitle,
   DrawerDescription,
   DrawerTrigger,
+  DrawerClose,
 } from "@/components/ui/drawer"
+import { QuickTransactionModal } from '@/components/transactions/QuickTransactionModal';
+import { TransferModal } from '@/components/transactions/TransferModal';
 
 
 interface NavItem {
@@ -24,14 +27,39 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: Home, label: 'Início', href: '/dashboard' },
-  { icon: Wallet, label: 'Dívidas', href: '/debts' },
+  { icon: Wallet, label: 'Contas', href: '/accounts' },
   { icon: CreditCard, label: 'Cartões', href: '/credit-cards' },
-  { icon: PieChart, label: 'Planej.', href: '/budgets' }, 
+  { icon: MoreHorizontal, label: 'Mais', href: '/more' }, 
 ];
 
 export function MobileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const router = useRouter();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [transactionModalOpen, setTransactionModalOpen] = useState(false);
+  const [transactionType, setTransactionType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+
+  const handleOpenTransactionModal = (type: 'INCOME' | 'EXPENSE') => {
+    setTransactionType(type);
+    setDrawerOpen(false);
+    // Small delay to allow drawer to close first
+    setTimeout(() => {
+      setTransactionModalOpen(true);
+    }, 100);
+  };
+
+  const handleOpenTransferModal = () => {
+    setDrawerOpen(false);
+    setTimeout(() => {
+      setTransferModalOpen(true);
+    }, 100);
+  };
+
+  const handleTransactionSuccess = () => {
+    setTransactionModalOpen(false);
+    router.refresh();
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-[calc(4rem+env(safe-area-inset-bottom))]">
@@ -39,6 +67,19 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 w-full max-w-md mx-auto p-4 animate-in fade-in">
         {children}
       </main>
+
+      {/* Transaction Modals */}
+      <QuickTransactionModal
+        open={transactionModalOpen}
+        onOpenChange={setTransactionModalOpen}
+        type={transactionType}
+      />
+      
+      <TransferModal
+        open={transferModalOpen}
+        onOpenChange={setTransferModalOpen}
+        onSuccess={() => router.refresh()}
+      />
 
       {/* Bottom Nav */}
       <div className="fixed bottom-0 left-0 right-0 border-t bg-background/80 backdrop-blur-md z-50 pb-[env(safe-area-inset-bottom)]">
@@ -63,7 +104,7 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
 
           {/* FAB - Central Action Button */}
           <div className="-mt-8">
-             <Drawer>
+             <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                 <DrawerTrigger asChild>
                     <Button 
                         size="icon" 
@@ -74,87 +115,55 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
                     </Button>
                 </DrawerTrigger>
                 <DrawerContent>
-                    <DrawerHeader>
+                    <DrawerHeader className="relative">
                         <DrawerTitle>Ações Rápidas</DrawerTitle>
                         <DrawerDescription className="sr-only">Selecione uma ação para realizar</DrawerDescription>
+                        <DrawerClose asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute right-4 top-4 h-8 w-8"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </DrawerClose>
                     </DrawerHeader>
-                    <div className="p-4 grid grid-cols-3 gap-4">
-                        <Link href="/transactions/new?type=INCOME" className="w-full">
-                            <Button variant="outline" className="flex flex-col h-auto py-3 gap-2 w-full">
-                                    <Wallet className="h-5 w-5 text-green-500" />
-                                    <span className="text-xs">Receita</span>
-                            </Button>
-                        </Link>
-                        <Link href="/transactions/new?type=EXPENSE" className="w-full">
-                            <Button variant="outline" className="flex flex-col h-auto py-3 gap-2 w-full">
-                                    <CreditCard className="h-5 w-5 text-red-500" />
-                                    <span className="text-xs">Despesa</span>
-                            </Button>
-                        </Link>
-                        <Button variant="outline" className="flex flex-col h-auto py-3 gap-2">
-                             <Menu className="h-5 w-5" />
-                             <span className="text-xs">Outros</span>
-                        </Button>
-                        <Link href="/categories" className="w-full col-span-3">
-                            <Button variant="ghost" className="w-full text-xs">
-                                🏷️ Gerenciar Categorias
-                            </Button>
-                        </Link>
-                        <Link href="/transactions" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                📋 Ver Movimentações
-                            </Button>
-                        </Link>
-                        <Link href="/reserves" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                🐷 Minhas Reservas
-                            </Button>
-                        </Link>
-                        <Link href="/notifications" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                🔔 Notificações
-                            </Button>
-                        </Link>
-                        <Link href="/import" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                📥 Importar Dados
-                            </Button>
-                        </Link>
-                        <Link href="/export" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                📤 Exportar Dados
-                            </Button>
-                        </Link>
-                        <Link href="/recurring" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                🔄 Recorrentes
-                            </Button>
-                        </Link>
-                        <Link href="/simulation" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                🧮 Simulação
-                            </Button>
-                        </Link>
-                        <Link href="/backup" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                🔒 Backup
-                            </Button>
-                        </Link>
-                        <Link href="/settings" className="w-full col-span-3">
-                            <Button variant="outline" className="w-full text-xs">
-                                ⚙️ Configurações
-                            </Button>
-                        </Link>
-                        <div className="col-span-3 border-t pt-4 mt-2">
+                    <div className="p-4 pb-8">
+                        <div className="grid grid-cols-3 gap-4">
                             <Button 
-                                variant="ghost" 
-                                className="w-full text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
-                                onClick={logout}
+                              variant="outline" 
+                              className="flex flex-col h-auto py-4 gap-2 w-full border-2 hover:border-green-500 hover:bg-green-50"
+                              onClick={() => handleOpenTransactionModal('INCOME')}
                             >
-                                <LogOut className="h-4 w-4 mr-2" />
-                                Sair do Sistema
+                                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                    <Wallet className="h-5 w-5 text-green-600" />
+                                </div>
+                                <span className="text-sm font-medium">Receita</span>
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              className="flex flex-col h-auto py-4 gap-2 w-full border-2 hover:border-red-500 hover:bg-red-50"
+                              onClick={() => handleOpenTransactionModal('EXPENSE')}
+                            >
+                                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                                    <CreditCard className="h-5 w-5 text-red-600" />
+                                </div>
+                                <span className="text-sm font-medium">Despesa</span>
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              className="flex flex-col h-auto py-4 gap-2 w-full border-2 hover:border-blue-500 hover:bg-blue-50"
+                              onClick={handleOpenTransferModal}
+                            >
+                                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <ArrowLeftRight className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <span className="text-sm font-medium">Transferir</span>
                             </Button>
                         </div>
+                        <p className="text-xs text-muted-foreground text-center mt-4">
+                            Para mais opções, acesse o menu &quot;Mais&quot;
+                        </p>
                     </div>
                 </DrawerContent>
              </Drawer>

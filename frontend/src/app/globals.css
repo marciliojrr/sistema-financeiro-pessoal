@@ -114,4 +114,29 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Font Switching Logic */
+  body[data-font="geist"] {
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  body[data-font="jakarta"] {
+    font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.015em; /* Slightly tighter for better optical sizing */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Refine heavy headings in Jakarta */
+  body[data-font="jakarta"] h1,
+  body[data-font="jakarta"] h2,
+  body[data-font="jakarta"] h3,
+  body[data-font="jakarta"] h4,
+  body[data-font="jakarta"] h5,
+  body[data-font="jakarta"] h6 {
+    font-weight: 600; /* Reduce from 700/bold default if too heavy */
+    letter-spacing: -0.02em;
+  }
 }

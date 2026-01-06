@@ -5,13 +5,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FinancialMovement } from 'src/database/entities/financial-movement.entity';
+import { FinancialMovement, MovementType } from 'src/database/entities/financial-movement.entity';
 import { CreateFinancialMovementDto } from './dto/create-financial-movement.dto';
 import { Profile } from 'src/database/entities/profile.entity';
 import { FinancialCategory } from 'src/database/entities/financial-category.entity';
 import { UpdateFinancialMovementDto } from './dto/update-financial-movement.dto';
-
-import { MovementType } from 'src/database/entities/financial-movement.entity';
+import { Account } from 'src/database/entities/account.entity';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { BudgetsService } from '../budgets/budgets.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -26,6 +25,8 @@ export class FinancialMovementsService {
     private readonly profileRepository: Repository<Profile>,
     @InjectRepository(FinancialCategory)
     private readonly categoryRepository: Repository<FinancialCategory>,
+    @InjectRepository(Account)
+    private readonly accountRepository: Repository<Account>,
     private readonly budgetsService: BudgetsService,
     private readonly notificationsService: NotificationsService,
     private readonly debtsService: DebtsService,
@@ -58,10 +59,26 @@ export class FinancialMovementsService {
       if (!category) throw new NotFoundException('Categoria não encontrada.');
     }
 
+    // Conta (opcional)
+    let account: Account | null = null;
+    if (data.accountId) {
+      account = await this.accountRepository.findOne({
+        where: { id: data.accountId },
+        relations: ['profile', 'profile.user'],
+      });
+
+      if (!account) throw new NotFoundException('Conta não encontrada.');
+      // Valida se a conta pertence ao mesmo usuário (via perfil)
+      if (account.profile.user.id !== userId) {
+        throw new ForbiddenException('Acesso negado. A conta não pertence ao usuário.');
+      }
+    }
+
     const movement = this.movementRepository.create({
       ...data,
       profile,
       category: category as any, // TypeORM handles null if nullable: true
+      account: account as any,
       date: new Date(data.date),
     });
     const savedMovement = await this.movementRepository.save(movement);
@@ -101,6 +118,7 @@ export class FinancialMovementsService {
       .createQueryBuilder('movement')
       .leftJoinAndSelect('movement.profile', 'profile')
       .leftJoinAndSelect('movement.category', 'category')
+      .leftJoinAndSelect('movement.account', 'account')
       .leftJoin('profile.user', 'user')
       .where('profile.user.id = :userId', { userId });
 
@@ -111,6 +129,10 @@ export class FinancialMovementsService {
     if (filters?.categoryId)
       query.andWhere('category.id = :categoryId', {
         categoryId: filters.categoryId,
+      });
+    if (filters?.accountId)
+      query.andWhere('account.id = :accountId', {
+        accountId: filters.accountId,
       });
     if (filters?.startDate)
       query.andWhere('movement.date >= :startDate', {
@@ -137,7 +159,7 @@ export class FinancialMovementsService {
   async findOne(id: string, userId: string) {
     const movement = await this.movementRepository.findOne({
       where: { id },
-      relations: ['profile', 'category', 'profile.user'],
+      relations: ['profile', 'category', 'profile.user', 'account'],
     });
 
     if (!movement) throw new NotFoundException('Movimentação não encontrada.');
@@ -165,7 +187,7 @@ export class FinancialMovementsService {
   async update(id: string, data: UpdateFinancialMovementDto, userId: string) {
     const movement = await this.movementRepository.findOne({
       where: { id },
-      relations: ['profile', 'profile.user', 'category'],
+      relations: ['profile', 'profile.user', 'category', 'account'],
     });
 
     if (!movement) throw new NotFoundException('Movimentação não encontrada.');
@@ -195,6 +217,20 @@ export class FinancialMovementsService {
       if (!category) throw new NotFoundException('Categoria não encontrada.');
 
       movement.category = category;
+    }
+
+    // Se accountId for alterado, valide existência
+    if (data.accountId && data.accountId !== movement.account?.id) {
+      const account = await this.accountRepository.findOne({
+        where: { id: data.accountId },
+        relations: ['profile', 'profile.user'],
+      });
+
+      if (!account) throw new NotFoundException('Conta não encontrada.');
+      if (account.profile.user.id !== userId) {
+        throw new ForbiddenException('Acesso negado. A conta não pertence ao usuário.');
+      }
+      movement.account = account;
     }
 
     const oldMovement = { ...movement };

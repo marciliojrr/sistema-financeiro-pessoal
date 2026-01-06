@@ -22,6 +22,15 @@ export class ProfilesService {
       where: { id: data.userId },
     });
     if (!user) throw new Error('Usuário não encontrado');
+
+    // Check for duplicate profile name for this user
+    const existingProfile = await this.profileRepository.findOne({
+      where: { name: data.name, user: { id: data.userId } },
+    });
+    if (existingProfile) {
+      throw new Error('Já existe um perfil com este nome');
+    }
+
     const profile = this.profileRepository.create({ ...data, user });
     const savedProfile = await this.profileRepository.save(profile);
 
@@ -55,7 +64,8 @@ export class ProfilesService {
     // profile.user might be loaded by findOne (relations ['user']).
     const userId = profile?.user?.id;
 
-    await this.profileRepository.softDelete(id);
+    // Use regular delete since we don't have proper soft delete setup
+    await this.profileRepository.delete(id);
 
     if (userId) {
       await this.auditLogsService.logChange(userId, 'DELETE', 'Profile', id, {
@@ -64,5 +74,10 @@ export class ProfilesService {
     }
 
     return { deleted: true };
+  }
+
+  async update(id: string, data: Partial<CreateProfileDto>) {
+    await this.profileRepository.update(id, { name: data.name });
+    return this.findOne(id);
   }
 }

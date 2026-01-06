@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsBoolean,
 } from 'class-validator';
+import { IncomeSource } from '../../database/entities/financial-category.entity';
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -36,6 +37,7 @@ export class CreateCategoryDto {
   @IsNotEmpty()
   @IsString()
   profileId: string;
+
   @ApiProperty({
     description: 'Indica se a categoria é para despesas/receitas fixas',
     required: false,
@@ -44,4 +46,13 @@ export class CreateCategoryDto {
   @IsBoolean()
   @IsOptional()
   isFixed?: boolean;
+
+  @ApiProperty({
+    enum: IncomeSource,
+    description: 'Fonte de renda (apenas para categorias de receita)',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(IncomeSource)
+  incomeSource?: IncomeSource;
 }

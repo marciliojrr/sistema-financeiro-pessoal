@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { categoriesService, Category } from '@/services/categoriesService';
 import { transactionsService, CreateTransactionDto, Transaction } from '@/services/transactionsService';
 import { creditCardsService, CreditCard } from '@/services/creditCardsService';
+import { accountsService, Account } from '@/services/accountsService';
 import { useRouter } from 'next/navigation';
 import { CurrencyInputField } from '@/components/ui/currency-input';
 import { cn } from '@/lib/utils';
@@ -48,16 +49,25 @@ interface TransactionFormProps {
   initialType?: 'INCOME' | 'EXPENSE';
   initialData?: Transaction;
   transactionId?: string;
+  onSuccess?: () => void;
+  isModal?: boolean;
 }
 
-export function TransactionForm({ initialType = 'EXPENSE', initialData, transactionId }: TransactionFormProps) {
+export function TransactionForm({ 
+  initialType = 'EXPENSE', 
+  initialData, 
+  transactionId,
+  onSuccess,
+  isModal = false
+}: TransactionFormProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
   const [suggestedCategory, setSuggestedCategory] = useState<Category | null>(null);
 
-  const form = useForm<TransactionFormData & { paymentMethod: 'CASH' | 'CREDIT_CARD', creditCardId?: string, installments?: number }>({
+  const form = useForm<TransactionFormData & { paymentMethod: 'CASH' | 'CREDIT_CARD', creditCardId?: string, installments?: number, accountId?: string }>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: initialData?.type || initialType,
@@ -67,7 +77,8 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
       description: initialData?.description || '',
       categoryId: initialData?.categoryId || 'none',
       paymentMethod: 'CASH',
-      installments: 1
+      installments: 1,
+      accountId: initialData?.accountId || 'none',
     },
   });
 
@@ -77,12 +88,14 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
   useEffect(() => {
     const loadData = async () => {
         try {
-            const [allCategories, allCards] = await Promise.all([
+            const [allCategories, allCards, allAccounts] = await Promise.all([
                 categoriesService.getAll(),
-                creditCardsService.getAll()
+                creditCardsService.getAll(),
+                accountsService.getAll()
             ]);
             setCategories(allCategories.filter(c => c.type === type));
             setCreditCards(allCards);
+            setAccounts(allAccounts);
         } catch (error) {
             console.error('Failed to load data', error);
             toast.error('Erro ao carregar dados');
@@ -133,6 +146,7 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
             type: data.type.toLowerCase() as 'income' | 'expense',
             categoryId: data.categoryId === 'none' ? undefined : data.categoryId,
             profileId: profileId!,
+            accountId: data.accountId === 'none' ? undefined : data.accountId,
           };
 
           if (transactionId) {
@@ -144,8 +158,12 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
           }
       }
       
-      router.push('/dashboard'); 
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/dashboard'); 
+        router.refresh();
+      }
     } catch (error) {
       console.error('Save error:', error);
       toast.error('Erro ao salvar transação.');
@@ -253,6 +271,24 @@ export function TransactionForm({ initialType = 'EXPENSE', initialData, transact
               </SelectContent>
             </Select>
           </div>
+      )}
+
+      {paymentMethod === 'CASH' && (
+        <div className="space-y-2 p-4 bg-muted/50 rounded-lg border border-border/50">
+          <Label htmlFor="accountId">Conta (Opcional)</Label>
+          <Select onValueChange={(val) => form.setValue('accountId', val)} defaultValue={form.getValues('accountId')}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a conta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Carteira / Dinheiro</SelectItem>
+              {accounts.map((acc) => (
+                <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+           <p className="text-xs text-muted-foreground">Selecione a conta para debitar/creditar o saldo.</p>
+        </div>
       )}
 
       {type === 'EXPENSE' && paymentMethod === 'CREDIT_CARD' && (

@@ -13,6 +13,7 @@ import { FinancialScenario } from './financial-scenario.entity';
 import { Debt } from './debt.entity';
 import { Invoice } from './invoice.entity';
 import { InstallmentPurchase } from './installment-purchase.entity';
+import { Account } from './account.entity';
 
 export enum MovementType {
   INCOME = 'income',
@@ -95,4 +96,13 @@ export class FinancialMovement {
 
   @Column({ nullable: true })
   installmentPurchaseId: string;
+
+  @ManyToOne(() => Account, (account) => account.financialMovements, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  account: Account;
+
+  @Column({ nullable: true })
+  accountId: string;
 }

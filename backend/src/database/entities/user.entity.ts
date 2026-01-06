@@ -22,6 +22,9 @@ export class User {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  avatar: string;
+
   @OneToMany(() => Profile, (profile) => profile.user)
   profiles: Profile[];
 

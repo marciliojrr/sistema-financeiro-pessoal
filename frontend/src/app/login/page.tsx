@@ -41,7 +41,7 @@ export default function LoginPage() {
       const { access_token, user } = response.data;
       
       // Store token
-      login(access_token, user.id, user.name, user.defaultProfileId);
+      login(access_token, user.id, user.name, user.avatar, user.defaultProfileId);
       
       toast.success('Login realizado com sucesso!');
       router.push('/dashboard');

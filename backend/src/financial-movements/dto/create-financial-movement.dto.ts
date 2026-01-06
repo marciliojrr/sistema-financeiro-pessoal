@@ -70,4 +70,13 @@ export class CreateFinancialMovementDto {
   @IsOptional()
   @IsString()
   scenarioId?: string;
+
+  @ApiProperty({
+    example: 'uuid-da-conta',
+    required: false,
+    description: 'Conta bancária associada',
+  })
+  @IsOptional()
+  @IsString()
+  accountId?: string;
 }

@@ -1,11 +1,20 @@
 import api from './api';
 
+export enum IncomeSource {
+  SALARY = 'SALARY',
+  SCHOLARSHIP = 'SCHOLARSHIP',
+  FREELANCE = 'FREELANCE',
+  INVESTMENT = 'INVESTMENT',
+  OTHER = 'OTHER',
+}
+
 export interface Category {
   id: string;
   name: string;
   type: 'INCOME' | 'EXPENSE';
   isFixed: boolean;
   keywords?: string;
+  incomeSource?: IncomeSource;
 }
 
 interface SuggestResponse {

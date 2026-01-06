@@ -20,9 +20,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { ProfileSwitcher } from '@/components/ProfileSwitcher';
 import { ProfileNotificationModal } from '@/components/ProfileNotificationModal';
+import { UserAvatar } from '@/components/UserAvatar';
 
 export default function DashboardPage() {
-  const { userName } = useAuth();
+  const { userName, userAvatar } = useAuth();
   const { profiles, currentProfileId, isLoading: profileLoading } = useProfile();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [chartData, setChartData] = useState<{ category: string; amount: number }[]>([]);
@@ -96,14 +97,29 @@ export default function DashboardPage() {
     return 'Boa noite';
   };
 
+
+
+// ...
+
   return (
     <MobileLayout>
       <header className="mb-6">
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-bold tracking-tight">{getGreeting()}, {userName?.split(' ')[0] || 'Visitante'} 👋</h1>
-          <ProfileSwitcher />
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+             <UserAvatar 
+                name={userName} 
+                avatar={userAvatar} 
+                size="md" 
+             />
+              <div>
+                 <h1 className="text-xl font-bold tracking-tight">{getGreeting()}, {userName?.split(' ')[0] || 'Visitante'} 👋</h1>
+                 <p className="text-xs text-muted-foreground">
+                   {data ? `Aqui está seu resumo financeiro de ${data.currentMonth}/${data.currentYear}` : '...'}
+                 </p>
+              </div>
+           </div>
+           <ProfileSwitcher />
         </div>
-        <p className="text-muted-foreground">Aqui está seu resumo financeiro de {data ? `${data.currentMonth}/${data.currentYear}` : '...'}.</p>
       </header>
       
       <div className="space-y-4">
@@ -196,7 +212,7 @@ export default function DashboardPage() {
 
          {/* Free Spend & Reserves */}
          <div className="grid gap-4">
-            <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0">
+            <Card className="bg-linear-to-br from-indigo-500 to-purple-600 text-white border-0">
                 <CardHeader className="p-4 pb-2">
                     <CardTitle className="text-sm font-medium text-white/80">Disponível para Gasto Livre</CardTitle>
                 </CardHeader>

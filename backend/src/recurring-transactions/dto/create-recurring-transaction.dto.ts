@@ -52,4 +52,13 @@ export class CreateRecurringTransactionDto {
   @IsOptional()
   @IsUUID()
   reserveId?: string;
+
+  @ApiProperty({
+    example: true,
+    required: false,
+    description: 'Se true, não gera lançamentos retroativos para datas passadas',
+  })
+  @IsOptional()
+  @IsBoolean()
+  skipPastRuns?: boolean;
 }

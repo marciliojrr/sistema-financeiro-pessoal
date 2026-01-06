@@ -21,6 +21,7 @@ export interface CreateTransactionDto {
   categoryId?: string;
   notes?: string;
   profileId: string;
+  accountId?: string;
 }
 
 export const transactionsService = {

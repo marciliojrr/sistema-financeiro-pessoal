@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Body,
   Param,
   Delete,
@@ -32,6 +33,11 @@ export class ProfilesController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.profileService.findOne(id);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updateProfileDto: Partial<CreateProfileDto>) {
+    return this.profileService.update(id, updateProfileDto);
   }
 
   @Delete(':id')

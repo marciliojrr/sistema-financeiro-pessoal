@@ -73,12 +73,24 @@ export class RecurringTransactionsService {
       reserve = found;
     }
 
+    // Calcular nextRun: se skipPastRuns=true e startDate < hoje, avança para a próxima data futura
+    let nextRun = new Date(data.startDate);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    if (data.skipPastRuns && nextRun < now) {
+      // Avança nextRun até ser >= hoje
+      while (nextRun < now) {
+        nextRun = this.calculateNextRun(nextRun, data.frequency);
+      }
+    }
+
     const transaction = this.recurringRepo.create({
       ...data,
       profile,
       category,
       reserve,
-      nextRun: new Date(data.startDate), // Primeira execução é na data de início
+      nextRun, // Usa a data calculada (futura se skipPastRuns)
     });
 
     const savedTransaction = await this.recurringRepo.save(transaction);

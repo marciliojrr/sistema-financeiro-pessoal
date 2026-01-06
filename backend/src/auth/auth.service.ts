@@ -40,6 +40,7 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
         defaultProfileId: defaultProfile ? defaultProfile.id : null,
       },
     };

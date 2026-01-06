@@ -176,7 +176,7 @@ export default function CardDashboardPage() {
                 </div>
 
                 {/* Card Visual */}
-                <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0">
+                <Card className="bg-linear-to-r from-slate-900 to-slate-800 text-white border-0">
                     <CardHeader className="pb-2">
                          <div className="flex justify-between items-start">
                             <CardTitle className="text-lg text-white">{card.bank}</CardTitle>

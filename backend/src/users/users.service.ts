@@ -50,4 +50,9 @@ export class UsersService {
     await this.usersRepository.delete(id);
     return { deleted: true };
   }
+
+  async update(id: string, data: Partial<CreateUserDto>) {
+    await this.usersRepository.update(id, data);
+    return this.findOne(id);
+  }
 }
