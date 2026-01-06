@@ -11,6 +11,7 @@ export interface Transaction {
   paymentDate?: string;
   profileId?: string;
   installmentPurchaseId?: string | null;
+  accountId?: string;
 }
 
 export interface CreateTransactionDto {

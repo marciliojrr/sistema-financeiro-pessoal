@@ -45,8 +45,9 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
 
 export function useFont() {
   const context = useContext(FontContext);
+  // Return default values during SSG/SSR or when not inside provider
   if (context === undefined) {
-    throw new Error('useFont must be used within a FontProvider');
+    return { font: 'geist' as FontType, setFont: () => {} };
   }
   return context;
 }
