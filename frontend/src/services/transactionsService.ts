@@ -13,7 +13,7 @@ export interface Transaction {
   description: string;
   amount: number;
   date: string;
-  type: 'INCOME' | 'EXPENSE' | 'income' | 'expense';
+  type: 'INCOME' | 'EXPENSE';
   categoryId?: string;
   isPaid: boolean;
   paymentDate?: string;
