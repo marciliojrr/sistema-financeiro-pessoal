@@ -30,6 +30,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { BackupModule } from './backup/backup.module';
 import { AccountsModule } from './accounts/accounts.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { AccountsModule } from './accounts/accounts.module';
     DashboardModule,
     BackupModule,
     AccountsModule,
+    AdminModule,
 
     // Agendamento de Tarefas (Cron)
     ScheduleModule.forRoot(),
