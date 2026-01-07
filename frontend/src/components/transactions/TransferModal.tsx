@@ -240,7 +240,7 @@ export function TransferModal({ open, onOpenChange, onSuccess }: TransferModalPr
                 id="amount"
                 value={amount}
                 onValueChange={(val) => setAmount(val || '')}
-                placeholder="R$ 0,00"
+                placeholder="0,00"
               />
             </div>
 

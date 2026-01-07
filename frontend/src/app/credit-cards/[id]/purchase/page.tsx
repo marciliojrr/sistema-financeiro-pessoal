@@ -99,7 +99,7 @@ export default function NewPurchasePage() {
                             <Label htmlFor="totalValue">Valor Total</Label>
                             <CurrencyInputField 
                                 id="totalValue"
-                                placeholder="R$ 0,00"
+                                placeholder="0,00"
                                 onValueChange={(val) => form.setValue('totalValue', val || '')} 
                                 value={form.getValues('totalValue')}
                             />

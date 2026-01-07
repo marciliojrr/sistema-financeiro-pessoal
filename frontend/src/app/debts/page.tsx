@@ -186,7 +186,7 @@ export default function DebtsPage() {
                   id="totalAmount"
                   value={form.watch('totalAmount')}
                   onValueChange={(val) => form.setValue('totalAmount', val || '')}
-                  placeholder="R$ 0,00"
+                  placeholder="0,00"
                 />
                 {form.formState.errors.totalAmount && (
                   <p className="text-sm text-red-500">{form.formState.errors.totalAmount.message}</p>

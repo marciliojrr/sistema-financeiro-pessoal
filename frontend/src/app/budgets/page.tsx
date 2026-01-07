@@ -182,7 +182,7 @@ export default function BudgetsPage() {
                     id="amount"
                     value={form.watch('amount')}
                     onValueChange={(val) => form.setValue('amount', val || '')}
-                    placeholder="R$ 0,00"
+                    placeholder="0,00"
                 />
                  {form.formState.errors.amount && (
                   <p className="text-sm text-red-500">{form.formState.errors.amount.message}</p>

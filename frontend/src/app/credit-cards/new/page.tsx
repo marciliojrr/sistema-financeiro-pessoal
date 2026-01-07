@@ -110,7 +110,7 @@ export default function NewCreditCardPage() {
                             <Label htmlFor="limit">Limite de Crédito</Label>
                             <CurrencyInputField 
                                 id="limit"
-                                placeholder="R$ 0,00"
+                                placeholder="0,00"
                                 onValueChange={(val) => form.setValue('limit', val || '')} 
                                 value={form.getValues('limit')}
                             />
