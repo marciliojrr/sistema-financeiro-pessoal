@@ -78,15 +78,3 @@ export function useDeleteAccount() {
   });
 }
 
-export function useTransferBetweenAccounts() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: { fromAccountId: string; toAccountId: string; amount: number; description?: string }) =>
-      accountsService.transfer(data.fromAccountId, data.toAccountId, data.amount, data.description),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: accountKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    },
-  });
-}
