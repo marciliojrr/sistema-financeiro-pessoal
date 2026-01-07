@@ -115,11 +115,17 @@ export default function RecurringTransactionsPage() {
 
     setSubmitting(true);
     try {
+      // Backend expects lowercase type ('income' | 'expense')
+      const payload = {
+        ...formData,
+        type: formData.type.toLowerCase() as 'income' | 'expense',
+      };
+      
       if (editingTransaction) {
-        await recurringTransactionsService.update(editingTransaction.id, formData);
+        await recurringTransactionsService.update(editingTransaction.id, payload as unknown as CreateRecurringTransactionDto);
         toast.success('Transação atualizada com sucesso!');
       } else {
-        await recurringTransactionsService.create(formData);
+        await recurringTransactionsService.create(payload as unknown as CreateRecurringTransactionDto);
         toast.success('Transação recorrente criada!');
       }
       setIsDialogOpen(false);
