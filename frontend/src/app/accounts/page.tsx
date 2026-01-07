@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { CurrencyInputField } from '@/components/ui/currency-input';
 import {
   Select,
   SelectContent,
@@ -391,16 +392,14 @@ export default function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="initialBalance">Saldo Inicial *</Label>
-                <Input
+                <CurrencyInputField
                   id="initialBalance"
-                  type="number"
-                  step="0.01"
                   placeholder="0,00"
                   value={formData.initialBalance || ''}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      initialBalance: parseFloat(e.target.value) || 0,
+                      initialBalance: parseFloat(value || '0') || 0,
                     })
                   }
                 />
