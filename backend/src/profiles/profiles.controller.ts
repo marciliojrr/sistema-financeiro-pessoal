@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -26,22 +27,28 @@ export class ProfilesController {
   }
 
   @Get()
-  findAll() {
-    return this.profileService.findAll();
+  findAll(@Request() req) {
+    // SECURITY FIX: Filter profiles by authenticated user
+    return this.profileService.findAllByUser(req.user.userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.profileService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.profileService.findOneByUser(id, req.user.userId);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateProfileDto: Partial<CreateProfileDto>) {
-    return this.profileService.update(id, updateProfileDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateProfileDto: Partial<CreateProfileDto>,
+    @Request() req,
+  ) {
+    return this.profileService.update(id, updateProfileDto, req.user.userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.profileService.remove(id);
+  remove(@Param('id') id: string, @Request() req) {
+    return this.profileService.remove(id, req.user.userId);
   }
 }
+

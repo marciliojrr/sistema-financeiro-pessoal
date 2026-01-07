@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Profile } from '../database/entities/profile.entity';
@@ -23,12 +23,13 @@ export class ProfilesService {
     });
     if (!user) throw new Error('Usuário não encontrado');
 
-    // Check for duplicate profile name for this user
+    // Check for duplicate profile name for this user - return existing instead of error
     const existingProfile = await this.profileRepository.findOne({
       where: { name: data.name, user: { id: data.userId } },
     });
     if (existingProfile) {
-      throw new Error('Já existe um perfil com este nome');
+      // Return existing profile to avoid duplicates (idempotent operation)
+      return existingProfile;
     }
 
     const profile = this.profileRepository.create({ ...data, user });
@@ -45,6 +46,33 @@ export class ProfilesService {
     return savedProfile;
   }
 
+  // SECURITY FIX: Filter profiles by user ID
+  findAllByUser(userId: string) {
+    return this.profileRepository.find({
+      where: { user: { id: userId } },
+      relations: ['categories'],
+    });
+  }
+
+  // SECURITY FIX: Get profile only if it belongs to user
+  async findOneByUser(id: string, userId: string) {
+    const profile = await this.profileRepository.findOne({
+      where: { id },
+      relations: ['user', 'categories'],
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Perfil não encontrado');
+    }
+
+    if (profile.user.id !== userId) {
+      throw new ForbiddenException('Acesso negado');
+    }
+
+    return profile;
+  }
+
+  // Keep legacy methods for internal use only
   findAll() {
     return this.profileRepository.find({ relations: ['user', 'categories'] });
   }
@@ -56,28 +84,22 @@ export class ProfilesService {
     });
   }
 
-  async remove(id: string) {
-    const profile = await this.findOne(id);
+  async remove(id: string, userId: string) {
+    const profile = await this.findOneByUser(id, userId);
 
-    // We assume remove is called with permission check in controller or elsewhere,
-    // but here we just need the user ID for logging.
-    // profile.user might be loaded by findOne (relations ['user']).
-    const userId = profile?.user?.id;
-
-    // Use regular delete since we don't have proper soft delete setup
     await this.profileRepository.delete(id);
 
-    if (userId) {
-      await this.auditLogsService.logChange(userId, 'DELETE', 'Profile', id, {
-        old: profile,
-      });
-    }
+    await this.auditLogsService.logChange(userId, 'DELETE', 'Profile', id, {
+      old: profile,
+    });
 
     return { deleted: true };
   }
 
-  async update(id: string, data: Partial<CreateProfileDto>) {
+  async update(id: string, data: Partial<CreateProfileDto>, userId: string) {
+    await this.findOneByUser(id, userId); // Verify ownership
     await this.profileRepository.update(id, { name: data.name });
-    return this.findOne(id);
+    return this.findOneByUser(id, userId);
   }
 }
+
