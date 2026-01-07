@@ -118,10 +118,38 @@ O app possui uma **barra de navegação** na parte inferior com 5 seções:
 - Data
 - Categoria (ex: Alimentação)
 - Conta (de onde sai/entra o dinheiro)
+- **Status** (novo - veja abaixo)
 
 **Exemplo de uso:**
 
 > Comprou um café? Registre: Despesa > "Café" > R$ 8,00 > Categoria: Alimentação.
+
+---
+
+## 📌 Status de Transações
+
+**O que é:** Sistema para indicar o estado de cada transação.
+
+**Tipos de status:**
+
+| Status        | Ícone | Descrição                              |
+| ------------- | ----- | -------------------------------------- |
+| **Planejado** | 📋    | Transação futura, ainda não confirmada |
+| **Pendente**  | ⏳    | Aguardando pagamento ou recebimento    |
+| **Concluído** | ✅    | Transação efetivada (padrão)           |
+| **Cancelado** | ❌    | Transação que não vai mais acontecer   |
+
+**Por que usar:**
+
+- **Planejar o futuro:** Registre o salário que vai cair no dia 20 como "Planejado"
+- **Controle de pendências:** Marque boletos como "Pendente" até pagar
+- **Histórico preciso:** Apenas transações "Concluídas" afetam o saldo real
+
+**Exemplo de uso:**
+
+> Vai receber freelance dia 15? Cadastre como Receita com status **Planejado**. Quando receber, mude para **Concluído**.
+
+> Agendou um boleto para daqui 5 dias? Registre como Despesa com status **Pendente**. Após pagar, mude para **Concluído**.
 
 ---
 
@@ -283,19 +311,24 @@ O sistema pode lembrar ou registrar automaticamente essas transações.
 2. **Segundo:** Crie categorias que fazem sentido para você
 3. **Terceiro:** Registre todas as transações por 1 semana
 4. **Depois:** Analise onde está gastando mais
+5. **Dica:** Use status "Planejado" para receitas futuras!
 
 ---
 
 ## ❓ Glossário
 
-| Termo         | Significado                    |
-| ------------- | ------------------------------ |
-| **Receita**   | Dinheiro que você recebe       |
-| **Despesa**   | Dinheiro que você gasta        |
-| **Saldo**     | Receitas menos despesas        |
-| **FAB**       | Botão flutuante de ação rápida |
-| **Perfil**    | Contexto separado de finanças  |
-| **Categoria** | Tag para organizar transações  |
+| Termo         | Significado                      |
+| ------------- | -------------------------------- |
+| **Receita**   | Dinheiro que você recebe         |
+| **Despesa**   | Dinheiro que você gasta          |
+| **Saldo**     | Receitas menos despesas          |
+| **FAB**       | Botão flutuante de ação rápida   |
+| **Perfil**    | Contexto separado de finanças    |
+| **Categoria** | Tag para organizar transações    |
+| **Status**    | Estado atual de uma transação    |
+| **Planejado** | Transação futura, não confirmada |
+| **Pendente**  | Aguardando pagamento/recebimento |
+| **Concluído** | Transação já efetivada           |
 
 ---
 
@@ -307,4 +340,4 @@ Este é um sistema em desenvolvimento. Qualquer dúvida, bug ou sugestão, entre
 
 ---
 
-_Versão 1.0 - Janeiro 2026_
+_Versão 1.1 - Janeiro 2026 (Adicionado: Status de Transações)_
