@@ -70,7 +70,10 @@ export function TransactionForm({
   const form = useForm<TransactionFormData & { paymentMethod: 'CASH' | 'CREDIT_CARD', creditCardId?: string, installments?: number, accountId?: string }>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      type: initialData?.type || initialType,
+      // Fallback to EXPENSE if type is transfer (transfers shouldn't be edited here)
+      type: (initialData?.type && (initialData.type === 'INCOME' || initialData.type === 'EXPENSE')) 
+        ? initialData.type 
+        : initialType,
       date: initialData?.date ? new Date(initialData.date) : new Date(),
       isPaid: initialData?.isPaid ?? true,
       amount: initialData?.amount ? String(initialData.amount) : '',

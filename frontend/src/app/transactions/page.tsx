@@ -141,11 +141,12 @@ export default function TransactionsPage() {
     // Calculate totals for filtered transactions (excluding transfers)
     const totals = filteredTransactions.reduce(
         (acc, t) => {
-            const isTransfer = t.description.includes('[TRANSF');
+            const typeUpper = t.type.toUpperCase();
+            const isTransfer = typeUpper === 'TRANSFER_IN' || typeUpper === 'TRANSFER_OUT';
             if (isTransfer) return acc; // Don't count transfers in income/expense
             
             const amount = Number(t.amount) || 0;
-            if (t.type.toUpperCase() === 'INCOME') {
+            if (typeUpper === 'INCOME') {
                 acc.income += amount;
             } else {
                 acc.expense += amount;
@@ -284,18 +285,17 @@ export default function TransactionsPage() {
                     ) : (
                         <div className="divide-y">
                             {filteredTransactions.map((t) => {
-                                const isTransfer = t.description.includes('[TRANSF');
-                                const isOut = t.description.includes('[TRANSF OUT]');
+                                const typeUpper = t.type.toUpperCase();
+                                const isTransfer = typeUpper === 'TRANSFER_IN' || typeUpper === 'TRANSFER_OUT';
                                 const typeLabel = isTransfer 
-                                    ? (isOut ? 'Transferência ↗' : 'Transferência ↙')
-                                    : (t.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa');
+                                    ? (typeUpper === 'TRANSFER_OUT' ? 'Transferência ↗' : 'Transferência ↙')
+                                    : (typeUpper === 'INCOME' ? 'Receita' : 'Despesa');
                                 const dotColor = isTransfer 
                                     ? 'bg-blue-500' 
-                                    : (t.type.toUpperCase() === 'INCOME' ? 'bg-green-500' : 'bg-red-500');
+                                    : (typeUpper === 'INCOME' ? 'bg-green-500' : 'bg-red-500');
                                 const textColor = isTransfer 
                                     ? 'text-blue-600' 
-                                    : (t.type.toUpperCase() === 'INCOME' ? 'text-green-600' : 'text-red-600');
-                                const cleanDescription = t.description.replace('[TRANSF OUT] ', '').replace('[TRANSF IN] ', '');
+                                    : (typeUpper === 'INCOME' ? 'text-green-600' : 'text-red-600');
                                 
                                 return (
                                     <div 
@@ -309,7 +309,7 @@ export default function TransactionsPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-                                                <p className="font-medium truncate">{cleanDescription}</p>
+                                                <p className="font-medium truncate">{t.description}</p>
                                             </div>
                                             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                                                 <span>{typeLabel}</span>

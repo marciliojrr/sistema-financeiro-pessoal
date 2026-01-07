@@ -18,13 +18,15 @@ import { Account } from './account.entity';
 export enum MovementType {
   INCOME = 'income',
   EXPENSE = 'expense',
+  TRANSFER_IN = 'transfer_in',
+  TRANSFER_OUT = 'transfer_out',
 }
 
 export enum TransactionStatus {
-  PLANNED = 'planned',      // Transação futura, não confirmada
-  PENDING = 'pending',      // Aguardando pagamento/recebimento
-  COMPLETED = 'completed',  // Efetivada
-  CANCELLED = 'cancelled',  // Cancelada
+  PLANNED = 'planned', // Transação futura, não confirmada
+  PENDING = 'pending', // Aguardando pagamento/recebimento
+  COMPLETED = 'completed', // Efetivada
+  CANCELLED = 'cancelled', // Cancelada
 }
 
 @Entity('financial_movements')

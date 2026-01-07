@@ -13,7 +13,7 @@ export interface Transaction {
   description: string;
   amount: number;
   date: string;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER_IN' | 'TRANSFER_OUT';
   categoryId?: string;
   isPaid: boolean;
   paymentDate?: string;
@@ -27,7 +27,7 @@ export interface CreateTransactionDto {
   description: string;
   amount: number;
   date: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer_in' | 'transfer_out';
   categoryId?: string;
   notes?: string;
   profileId: string;

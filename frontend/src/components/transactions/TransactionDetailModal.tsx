@@ -26,12 +26,13 @@ export function TransactionDetailModal({
 
   if (!transaction) return null;
 
-  const isTransfer = transaction.description.includes('[TRANSF');
-  const isIncome = transaction.type.toUpperCase() === 'INCOME';
+  const typeUpper = transaction.type.toUpperCase();
+  const isTransfer = typeUpper === 'TRANSFER_IN' || typeUpper === 'TRANSFER_OUT';
+  const isIncome = typeUpper === 'INCOME';
   
   const getTypeInfo = () => {
     if (isTransfer) {
-      const isOut = transaction.description.includes('[TRANSF OUT]');
+      const isOut = typeUpper === 'TRANSFER_OUT';
       return {
         label: isOut ? 'Transferência Saída' : 'Transferência Entrada',
         icon: <ArrowRightLeft className="h-5 w-5" />,
@@ -56,10 +57,6 @@ export function TransactionDetailModal({
   };
 
   const typeInfo = getTypeInfo();
-  
-  const cleanDescription = transaction.description
-    .replace('[TRANSF OUT] ', '')
-    .replace('[TRANSF IN] ', '');
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -103,7 +100,7 @@ export function TransactionDetailModal({
           {/* Descrição */}
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Descrição</p>
-            <p className="font-medium">{cleanDescription}</p>
+            <p className="font-medium">{transaction.description}</p>
           </div>
 
           {/* Data */}

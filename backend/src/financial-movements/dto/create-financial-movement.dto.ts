@@ -7,7 +7,10 @@ import {
   IsDateString,
   IsOptional,
 } from 'class-validator';
-import { MovementType, TransactionStatus } from '../../database/entities/financial-movement.entity';
+import {
+  MovementType,
+  TransactionStatus,
+} from '../../database/entities/financial-movement.entity';
 
 export class CreateFinancialMovementDto {
   @ApiProperty({ example: 2500.5, description: 'Valor da movimentação' })
@@ -26,7 +29,7 @@ export class CreateFinancialMovementDto {
   @ApiProperty({
     example: 'income',
     enum: MovementType,
-    description: 'Tipo: receita ou despesa',
+    description: 'Tipo: income, expense, transfer_in, transfer_out',
   })
   @IsEnum(MovementType)
   type: MovementType;
@@ -90,4 +93,3 @@ export class CreateFinancialMovementDto {
   @IsString()
   accountId?: string;
 }
-

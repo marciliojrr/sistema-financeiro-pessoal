@@ -102,22 +102,22 @@ export function TransferModal({ open, onOpenChange, onSuccess }: TransferModalPr
       const transferDescription = description.trim() || 
         `Transferência: ${sourceAccount?.name} → ${destAccount?.name}`;
 
-      // Create expense from source account
+      // Create transfer out from source account
       await transactionsService.create({
-        description: `[TRANSF OUT] ${transferDescription}`,
+        description: transferDescription,
         amount: numericAmount,
         date: new Date().toISOString(),
-        type: 'expense',
+        type: 'transfer_out',
         profileId,
         accountId: sourceAccountId,
       });
 
-      // Create income to destination account
+      // Create transfer in to destination account
       await transactionsService.create({
-        description: `[TRANSF IN] ${transferDescription}`,
+        description: transferDescription,
         amount: numericAmount,
         date: new Date().toISOString(),
-        type: 'income',
+        type: 'transfer_in',
         profileId,
         accountId: destinationAccountId,
       });
