@@ -71,7 +71,7 @@ export default function RecurringTransactionsPage() {
   const [formData, setFormData] = useState<CreateRecurringTransactionDto>({
     description: '',
     amount: 0,
-    type: 'EXPENSE',
+    type: 'expense',
     frequency: 'MONTHLY',
     startDate: new Date().toISOString().split('T')[0],
     categoryId: '',
@@ -115,17 +115,11 @@ export default function RecurringTransactionsPage() {
 
     setSubmitting(true);
     try {
-      // Backend expects lowercase type ('income' | 'expense')
-      const payload = {
-        ...formData,
-        type: formData.type.toLowerCase() as 'income' | 'expense',
-      };
-      
       if (editingTransaction) {
-        await recurringTransactionsService.update(editingTransaction.id, payload as unknown as CreateRecurringTransactionDto);
+        await recurringTransactionsService.update(editingTransaction.id, formData);
         toast.success('Transação atualizada com sucesso!');
       } else {
-        await recurringTransactionsService.create(payload as unknown as CreateRecurringTransactionDto);
+        await recurringTransactionsService.create(formData);
         toast.success('Transação recorrente criada!');
       }
       setIsDialogOpen(false);
@@ -183,7 +177,7 @@ export default function RecurringTransactionsPage() {
     setFormData({
       description: '',
       amount: 0,
-      type: 'EXPENSE',
+      type: 'expense',
       frequency: 'MONTHLY',
       startDate: new Date().toISOString().split('T')[0],
       categoryId: '',
@@ -247,7 +241,7 @@ export default function RecurringTransactionsPage() {
                   <p className="text-lg font-bold text-green-700">
                     {formatCurrency(
                       transactions
-                        .filter(t => t.type === 'INCOME' && t.active)
+                        .filter(t => t.type === 'income' && t.active)
                         .reduce((sum, t) => sum + Number(t.amount), 0)
                     )}
                   </p>
@@ -264,7 +258,7 @@ export default function RecurringTransactionsPage() {
                   <p className="text-lg font-bold text-red-700">
                     {formatCurrency(
                       transactions
-                        .filter(t => t.type === 'EXPENSE' && t.active)
+                        .filter(t => t.type === 'expense' && t.active)
                         .reduce((sum, t) => sum + Number(t.amount), 0)
                     )}
                   </p>
@@ -312,8 +306,8 @@ export default function RecurringTransactionsPage() {
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <Badge variant={transaction.type === 'INCOME' ? 'default' : 'destructive'}>
-                          {transaction.type === 'INCOME' ? 'Receita' : 'Despesa'}
+                        <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'}>
+                          {transaction.type === 'income' ? 'Receita' : 'Despesa'}
                         </Badge>
                         <Badge variant="outline">{getFrequencyLabel(transaction.frequency)}</Badge>
                         {transaction.category && (
@@ -331,9 +325,9 @@ export default function RecurringTransactionsPage() {
                     </div>
                     <div className="text-right">
                       <p className={`text-lg font-bold ${
-                        transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
+                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.type === 'INCOME' ? '+' : '-'}
+                        {transaction.type === 'income' ? '+' : '-'}
                         {formatCurrency(Number(transaction.amount))}
                       </p>
                       <div className="flex items-center gap-1 mt-2">
@@ -416,14 +410,14 @@ export default function RecurringTransactionsPage() {
                 <Label htmlFor="type">Tipo *</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(value: 'INCOME' | 'EXPENSE') => setFormData({ ...formData, type: value })}
+                  onValueChange={(value: 'income' | 'expense') => setFormData({ ...formData, type: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="INCOME">Receita</SelectItem>
-                    <SelectItem value="EXPENSE">Despesa</SelectItem>
+                    <SelectItem value="income">Receita</SelectItem>
+                    <SelectItem value="expense">Despesa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

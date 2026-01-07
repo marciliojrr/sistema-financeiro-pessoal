@@ -4,7 +4,7 @@ export interface RecurringTransaction {
   id: string;
   description: string;
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'income' | 'expense';
   frequency: 'MONTHLY' | 'WEEKLY' | 'YEARLY';
   startDate: string;
   endDate?: string;
@@ -27,7 +27,7 @@ export interface RecurringTransaction {
 export interface CreateRecurringTransactionDto {
   description: string;
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'income' | 'expense';
   frequency: 'MONTHLY' | 'WEEKLY' | 'YEARLY';
   startDate: string;
   endDate?: string;
