@@ -1,17 +1,26 @@
 import api from './api';
 
+// Status enum para transações
+export enum TransactionStatus {
+  PLANNED = 'planned',
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+}
+
 export interface Transaction {
   id: string;
   description: string;
   amount: number;
   date: string;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'income' | 'expense';
   categoryId?: string;
   isPaid: boolean;
   paymentDate?: string;
   profileId?: string;
   installmentPurchaseId?: string | null;
   accountId?: string;
+  status?: TransactionStatus;
 }
 
 export interface CreateTransactionDto {
@@ -23,6 +32,7 @@ export interface CreateTransactionDto {
   notes?: string;
   profileId: string;
   accountId?: string;
+  status?: TransactionStatus;
 }
 
 export const transactionsService = {

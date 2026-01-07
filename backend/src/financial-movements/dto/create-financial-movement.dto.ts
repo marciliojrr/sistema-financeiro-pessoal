@@ -7,7 +7,7 @@ import {
   IsDateString,
   IsOptional,
 } from 'class-validator';
-import { MovementType } from '../../database/entities/financial-movement.entity';
+import { MovementType, TransactionStatus } from '../../database/entities/financial-movement.entity';
 
 export class CreateFinancialMovementDto {
   @ApiProperty({ example: 2500.5, description: 'Valor da movimentação' })
@@ -42,6 +42,16 @@ export class CreateFinancialMovementDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({
+    example: 'completed',
+    enum: TransactionStatus,
+    description: 'Status: planned, pending, completed, cancelled',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TransactionStatus)
+  status?: TransactionStatus;
 
   @ApiProperty({ example: 'uuid-do-perfil' })
   @IsString()
@@ -80,3 +90,4 @@ export class CreateFinancialMovementDto {
   @IsString()
   accountId?: string;
 }
+

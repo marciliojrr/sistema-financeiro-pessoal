@@ -20,6 +20,13 @@ export enum MovementType {
   EXPENSE = 'expense',
 }
 
+export enum TransactionStatus {
+  PLANNED = 'planned',      // Transação futura, não confirmada
+  PENDING = 'pending',      // Aguardando pagamento/recebimento
+  COMPLETED = 'completed',  // Efetivada
+  CANCELLED = 'cancelled',  // Cancelada
+}
+
 @Entity('financial_movements')
 export class FinancialMovement {
   @PrimaryGeneratedColumn('uuid')
@@ -36,6 +43,13 @@ export class FinancialMovement {
 
   @Column({ nullable: true })
   notes?: string;
+
+  @Column({
+    type: 'enum',
+    enum: TransactionStatus,
+    default: TransactionStatus.COMPLETED,
+  })
+  status: TransactionStatus;
 
   @ManyToOne(() => Profile, (profile) => profile.financialMovements, {
     onDelete: 'CASCADE',
