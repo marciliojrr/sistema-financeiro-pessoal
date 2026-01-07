@@ -11,6 +11,7 @@ import { transactionsService, Transaction } from '@/services/transactionsService
 import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal';
 
 const MONTHS = [
     { value: 0, label: 'Janeiro' },
@@ -37,6 +38,8 @@ export default function TransactionsPage() {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [showAllTime, setShowAllTime] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
 
     const fetchTransactions = async () => {
         try {
@@ -135,9 +138,12 @@ export default function TransactionsPage() {
         setShowAllTime(false);
     };
 
-    // Calculate totals for filtered transactions
+    // Calculate totals for filtered transactions (excluding transfers)
     const totals = filteredTransactions.reduce(
         (acc, t) => {
+            const isTransfer = t.description.includes('[TRANSF');
+            if (isTransfer) return acc; // Don't count transfers in income/expense
+            
             const amount = Number(t.amount) || 0;
             if (t.type.toUpperCase() === 'INCOME') {
                 acc.income += amount;
@@ -277,38 +283,71 @@ export default function TransactionsPage() {
                         </div>
                     ) : (
                         <div className="divide-y">
-                            {filteredTransactions.map((t) => (
-                                <div key={t.id} className="flex items-center justify-between p-4 hover:bg-muted/50">
-                                    <div className="flex-1 min-w-0">
+                            {filteredTransactions.map((t) => {
+                                const isTransfer = t.description.includes('[TRANSF');
+                                const isOut = t.description.includes('[TRANSF OUT]');
+                                const typeLabel = isTransfer 
+                                    ? (isOut ? 'Transferência ↗' : 'Transferência ↙')
+                                    : (t.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa');
+                                const dotColor = isTransfer 
+                                    ? 'bg-blue-500' 
+                                    : (t.type.toUpperCase() === 'INCOME' ? 'bg-green-500' : 'bg-red-500');
+                                const textColor = isTransfer 
+                                    ? 'text-blue-600' 
+                                    : (t.type.toUpperCase() === 'INCOME' ? 'text-green-600' : 'text-red-600');
+                                const cleanDescription = t.description.replace('[TRANSF OUT] ', '').replace('[TRANSF IN] ', '');
+                                
+                                return (
+                                    <div 
+                                        key={t.id} 
+                                        className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedTransaction(t);
+                                            setDetailModalOpen(true);
+                                        }}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+                                                <p className="font-medium truncate">{cleanDescription}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                                <span>{typeLabel}</span>
+                                                <span>•</span>
+                                                <span>{format(parseISO(t.date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                                            </div>
+                                        </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`w-2 h-2 rounded-full ${t.type.toUpperCase() === 'INCOME' ? 'bg-green-500' : 'bg-red-500'}`} />
-                                            <p className="font-medium truncate">{t.description}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                            <span>{t.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa'}</span>
-                                            <span>•</span>
-                                            <span>{format(parseISO(t.date), 'dd/MM/yyyy', { locale: ptBR })}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`font-bold whitespace-nowrap ${t.type.toUpperCase() === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
-                                        </span>
-                                        <div className="flex gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push(`/transactions/${t.id}/edit`)}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(t.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <span className={`font-bold whitespace-nowrap ${textColor}`}>
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
+                                            </span>
+                                            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push(`/transactions/${t.id}/edit`)}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(t.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </CardContent>
             </Card>
+
+            {/* Modal de detalhes */}
+            <TransactionDetailModal
+                transaction={selectedTransaction}
+                open={detailModalOpen}
+                onOpenChange={setDetailModalOpen}
+                onDelete={(id) => {
+                    handleDelete(id);
+                    setDetailModalOpen(false);
+                }}
+            />
         </MobileLayout>
     );
 }

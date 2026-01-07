@@ -177,8 +177,8 @@ export function TransactionForm({
       <div className="space-y-2">
         <Label htmlFor="type">Tipo</Label>
         <Select 
+            value={form.watch('type')}
             onValueChange={(val) => form.setValue('type', val as 'INCOME' | 'EXPENSE')} 
-            defaultValue={type}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tipo" />
@@ -326,7 +326,7 @@ export function TransactionForm({
 
       <div className="space-y-2">
         <Label htmlFor="categoryId">Categoria</Label>
-        <Select onValueChange={(val) => form.setValue('categoryId', val)}>
+        <Select value={form.watch('categoryId')} onValueChange={(val) => form.setValue('categoryId', val)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione uma categoria" />
           </SelectTrigger>

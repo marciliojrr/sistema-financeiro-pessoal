@@ -186,19 +186,29 @@ export default function DashboardPage() {
                  ) : latestTransactions.length === 0 ? (
                    <p className="text-sm text-gray-500 text-center py-4">Nenhuma movimentação recente.</p>
                  ) : (
-                   latestTransactions.map((t) => (
-                     <div key={t.id} className="flex justify-between items-center border-b last:border-0 pb-2 last:pb-0">
-                       <div>
-                         <p className="font-medium text-sm">{t.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {t.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa'} • {format(parseISO(t.date), 'dd/MM/yyyy')}
-                          </p>
-                       </div>
-                       <span className={`font-bold text-sm ${t.type.toUpperCase() === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-                         {formatCurrency(Number(t.amount))}
-                       </span>
-                     </div>
-                   ))
+                    latestTransactions.map((t) => {
+                      const isTransfer = t.description.includes('[TRANSF');
+                      const typeLabel = isTransfer 
+                        ? (t.description.includes('[TRANSF OUT]') ? 'Transferência ↗' : 'Transferência ↙')
+                        : (t.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa');
+                      const colorClass = isTransfer 
+                        ? 'text-blue-600' 
+                        : (t.type.toUpperCase() === 'INCOME' ? 'text-green-600' : 'text-red-600');
+                      
+                      return (
+                        <div key={t.id} className="flex justify-between items-center border-b last:border-0 pb-2 last:pb-0">
+                          <div>
+                            <p className="font-medium text-sm">{t.description.replace('[TRANSF OUT] ', '').replace('[TRANSF IN] ', '')}</p>
+                             <p className="text-xs text-muted-foreground">
+                               {typeLabel} • {format(parseISO(t.date), 'dd/MM/yyyy')}
+                             </p>
+                          </div>
+                          <span className={`font-bold text-sm ${colorClass}`}>
+                            {formatCurrency(Number(t.amount))}
+                          </span>
+                        </div>
+                      );
+                    })
                  )}
              </CardContent>
          </Card>
