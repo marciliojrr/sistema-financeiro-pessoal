@@ -7,20 +7,32 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { TransactionForm } from './TransactionForm';
+import { emitDataChange } from '@/hooks/useDataRefresh';
 
 interface QuickTransactionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: 'INCOME' | 'EXPENSE';
+  onSuccess?: () => void;
 }
 
 export function QuickTransactionModal({ 
   open, 
   onOpenChange, 
-  type 
+  type,
+  onSuccess 
 }: QuickTransactionModalProps) {
   const handleSuccess = () => {
+    // Fecha o modal
     onOpenChange(false);
+    
+    // Emite eventos para atualizar todas as telas relevantes
+    emitDataChange(['transactions', 'accounts', 'dashboard']);
+    
+    // Notifica o componente pai se houver callback
+    if (onSuccess) {
+      onSuccess();
+    }
   };
 
   return (

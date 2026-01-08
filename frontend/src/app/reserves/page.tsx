@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { Plus, Pencil, Trash2, PiggyBank, Target, TrendingUp } from 'lucide-reac
 import { reservesService, Reserve, CreateReserveDto } from '@/services/reservesService';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
+import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
 
 export default function ReservesPage() {
   const [reserves, setReserves] = useState<Reserve[]>([]);
@@ -39,8 +40,9 @@ export default function ReservesPage() {
     color: '#6366f1',
   });
 
-  const fetchReserves = async () => {
+  const fetchReserves = useCallback(async () => {
     try {
+      setLoading(true);
       const data = await reservesService.getAll();
       setReserves(data);
     } catch (error) {
@@ -49,11 +51,14 @@ export default function ReservesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Escuta eventos de mudança de dados para atualizar automaticamente
+  useDataRefresh('reserves', fetchReserves);
 
   useEffect(() => {
     fetchReserves();
-  }, []);
+  }, [fetchReserves]);
 
   const resetForm = () => {
     setFormData({
@@ -120,7 +125,8 @@ export default function ReservesPage() {
 
       setIsDialogOpen(false);
       resetForm();
-      fetchReserves();
+      // Emite evento para atualizar outras telas
+      emitDataChange('reserves');
     } catch (error) {
       console.error('Failed to save reserve', error);
       toast.error('Erro ao salvar reserva');
@@ -133,7 +139,8 @@ export default function ReservesPage() {
     try {
       await reservesService.delete(id);
       toast.success('Reserva excluída');
-      fetchReserves();
+      // Emite evento para atualizar outras telas
+      emitDataChange('reserves');
     } catch (error) {
       console.error('Failed to delete reserve', error);
       toast.error('Erro ao excluir reserva');
@@ -148,7 +155,8 @@ export default function ReservesPage() {
       toast.success('Valor adicionado!');
       setAddMoneyReserve(null);
       setAddAmount('');
-      fetchReserves();
+      // Emite evento para atualizar outras telas
+      emitDataChange('reserves');
     } catch (error) {
       console.error('Failed to add money', error);
       toast.error('Erro ao adicionar valor');

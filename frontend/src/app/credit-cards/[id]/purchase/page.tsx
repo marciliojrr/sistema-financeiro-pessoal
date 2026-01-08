@@ -51,14 +51,14 @@ export default function NewPurchasePage() {
     const onSubmit = async (data: PurchaseFormData) => {
         setLoading(true);
         try {
-             const cleanValue = String(data.totalValue).replace(/[^0-9,]/g, '').replace(',', '.');
+             // Valor já vem como string numérica pura do CurrencyInputField
+             const numericValue = parseFloat(data.totalValue);
              
              const payload: CreateInstallmentPurchaseDto = {
                 productName: data.productName,
-                totalValue: parseFloat(cleanValue),
+                totalValue: numericValue,
                 installments: data.installments,
                 purchaseDate: data.purchaseDate,
-                // @ts-ignore
                 creditCardId: params.id as string,
                 categoryId: data.categoryId === "none" ? undefined : data.categoryId
              };
@@ -101,7 +101,7 @@ export default function NewPurchasePage() {
                                 id="totalValue"
                                 placeholder="0,00"
                                 onValueChange={(val) => form.setValue('totalValue', val || '')} 
-                                value={form.getValues('totalValue')}
+                                value={form.watch('totalValue')}
                             />
                             {form.formState.errors.totalValue && <p className="text-sm text-red-500">{form.formState.errors.totalValue.message}</p>}
                         </div>
@@ -121,7 +121,10 @@ export default function NewPurchasePage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="categoryId">Categoria</Label>
-                            <Select onValueChange={(v) => form.setValue('categoryId', v)}>
+                            <Select 
+                                value={form.watch('categoryId')} 
+                                onValueChange={(v) => form.setValue('categoryId', v)}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecione uma categoria" />
                                 </SelectTrigger>

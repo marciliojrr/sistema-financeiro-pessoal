@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CurrencyInputFieldProps {
@@ -11,6 +11,51 @@ interface CurrencyInputFieldProps {
   id?: string;
 }
 
+/**
+ * Formata um número para exibição em formato brasileiro (1.234,56)
+ */
+function formatToBRL(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
+ * Converte uma string de valor brasileiro para número
+ * Aceita formatos: "1.234,56" ou "1234.56" ou "1234,56"
+ */
+function parseBRLToNumber(value: string): number {
+  if (!value) return 0;
+  
+  // Remove espaços
+  let cleaned = value.trim();
+  
+  // Se tem tanto ponto quanto vírgula, o ponto é milhar e vírgula é decimal
+  if (cleaned.includes('.') && cleaned.includes(',')) {
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  }
+  // Se tem só vírgula, ela é o separador decimal
+  else if (cleaned.includes(',')) {
+    cleaned = cleaned.replace(',', '.');
+  }
+  // Se tem só ponto, precisamos determinar se é milhar ou decimal
+  // Se o ponto está seguido de exatamente 2 dígitos no final, é decimal
+  // Caso contrário, é milhar
+  else if (cleaned.includes('.')) {
+    const parts = cleaned.split('.');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // É decimal, mantém como está
+    } else {
+      // É milhar, remove
+      cleaned = cleaned.replace(/\./g, '');
+    }
+  }
+  
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+}
+
 export function CurrencyInputField({
   value,
   onValueChange,
@@ -18,39 +63,43 @@ export function CurrencyInputField({
   className,
   id,
 }: CurrencyInputFieldProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const [localValue, setLocalValue] = useState('');
+  const [hasLocalEdits, setHasLocalEdits] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Initialize only once with the initial value
-  const initialValueRef = useRef<string | null>(null);
-  if (initialValueRef.current === null) {
-    if (value !== undefined && value !== '' && value !== 0) {
-      const numVal = typeof value === 'string' ? parseFloat(value) : value;
-      if (!isNaN(numVal)) {
-        initialValueRef.current = numVal.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
-      } else {
-        initialValueRef.current = '';
-      }
-    } else {
-      initialValueRef.current = '';
+
+  // Calcula o valor de display baseado no estado
+  const getDisplayValue = (): string => {
+    // Se o usuário está editando, usa o valor local
+    if (isFocused || hasLocalEdits) {
+      return localValue;
     }
-  }
+    
+    // Caso contrário, formata o valor da prop
+    if (value === undefined || value === '' || value === 0) {
+      return '';
+    }
+    
+    const numVal = typeof value === 'string' ? parseBRLToNumber(value) : value;
+    if (numVal > 0) {
+      return formatToBRL(numVal);
+    }
+    return '';
+  };
 
   const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
     const cursorPos = input.selectionStart || 0;
-    let rawValue = input.value;
+    const rawValue = input.value;
     
-    // Keep only digits and one comma
+    // Permite apenas dígitos e um separador decimal (vírgula ou ponto)
     let cleaned = '';
-    let hasComma = false;
+    let hasDecimal = false;
     let decimals = 0;
     
     for (const char of rawValue) {
       if (char >= '0' && char <= '9') {
-        if (hasComma) {
+        if (hasDecimal) {
           if (decimals < 2) {
             cleaned += char;
             decimals++;
@@ -58,42 +107,61 @@ export function CurrencyInputField({
         } else {
           cleaned += char;
         }
-      } else if ((char === ',' || char === '.') && !hasComma) {
+      } else if ((char === ',' || char === '.') && !hasDecimal) {
         cleaned += ',';
-        hasComma = true;
+        hasDecimal = true;
       }
     }
 
-    // Update input value directly (bypass React state for responsiveness)
-    input.value = cleaned;
-    
-    // Restore cursor position
-    const newPos = Math.min(cursorPos, cleaned.length);
-    input.setSelectionRange(newPos, newPos);
+    setHasLocalEdits(true);
+    setLocalValue(cleaned);
 
-    // Notify parent
+    // Notifica o parent com o valor numérico puro (string com ponto decimal)
     if (cleaned) {
       const numericStr = cleaned.replace(',', '.');
       onValueChange(numericStr);
     } else {
       onValueChange(undefined);
     }
+    
+    // Restaura posição do cursor
+    requestAnimationFrame(() => {
+      if (inputRef.current) {
+        const newPos = Math.min(cursorPos, cleaned.length);
+        inputRef.current.setSelectionRange(newPos, newPos);
+      }
+    });
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const input = e.currentTarget;
-    const raw = input.value;
+  const handleFocus = () => {
+    setIsFocused(true);
     
-    if (raw) {
-      const numericStr = raw.replace(',', '.');
-      const num = parseFloat(numericStr);
-      if (!isNaN(num)) {
-        input.value = num.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+    // Ao focar, mostra o valor atual sem formatação de milhar para facilitar edição
+    const currentNumVal = typeof value === 'string' ? parseBRLToNumber(value) : (value || 0);
+    if (currentNumVal > 0) {
+      setLocalValue(currentNumVal.toFixed(2).replace('.', ','));
+    } else {
+      setLocalValue('');
+    }
+    setHasLocalEdits(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    
+    if (localValue) {
+      const numVal = parseBRLToNumber(localValue);
+      if (numVal > 0) {
+        // Garante que o valor numérico está correto
+        onValueChange(numVal.toString());
+      } else {
+        onValueChange(undefined);
       }
     }
+    
+    // Reseta as edições locais para que o componente volte a usar a prop
+    setHasLocalEdits(false);
+    setLocalValue('');
   };
 
   return (
@@ -107,8 +175,10 @@ export function CurrencyInputField({
         type="text"
         inputMode="decimal"
         placeholder={placeholder}
-        defaultValue={initialValueRef.current}
+        value={getDisplayValue()}
+        onChange={() => {}} // Controlled by onInput
         onInput={handleInput}
+        onFocus={handleFocus}
         onBlur={handleBlur}
         autoComplete="off"
         className={cn(

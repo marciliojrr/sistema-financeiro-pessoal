@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
@@ -9,14 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Plus, CreditCard as CreditCardIcon, Calendar, Trash2 } from 'lucide-react';
 import { creditCardsService, CreditCard } from '@/services/creditCardsService';
 import { toast } from 'sonner';
+import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
 
 export default function CreditCardsPage() {
     const router = useRouter();
     const [cards, setCards] = useState<CreditCard[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchCards = async () => {
+    const fetchCards = useCallback(async () => {
         try {
+            setLoading(true);
             const data = await creditCardsService.getAll();
             setCards(data);
         } catch (error) {
@@ -25,18 +27,22 @@ export default function CreditCardsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Escuta eventos de mudança de dados para atualizar automaticamente
+    useDataRefresh('credit-cards', fetchCards);
 
     useEffect(() => {
         fetchCards();
-    }, []);
+    }, [fetchCards]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir este cartão?')) return;
         try {
             await creditCardsService.delete(id);
             toast.success('Cartão excluído com sucesso');
-            fetchCards();
+            // Emite evento para atualizar outras telas
+            emitDataChange('credit-cards');
         } catch (error) {
             console.error('Failed to delete card', error);
             toast.error('Erro ao excluir cartão');

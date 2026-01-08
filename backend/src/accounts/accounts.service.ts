@@ -118,7 +118,9 @@ export class AccountsService {
     let balance = Number(account.initialBalance);
 
     for (const mov of movements) {
-      if (mov.type === MovementType.INCOME) {
+      // INCOME e TRANSFER_IN somam ao saldo (dinheiro entrando)
+      // EXPENSE e TRANSFER_OUT subtraem do saldo (dinheiro saindo)
+      if (mov.type === MovementType.INCOME || mov.type === MovementType.TRANSFER_IN) {
         balance += Number(mov.amount);
       } else {
         balance -= Number(mov.amount);
@@ -155,7 +157,9 @@ export class AccountsService {
 
     let movementsBalance = 0;
     for (const mov of movements) {
-      if (mov.type === MovementType.INCOME) {
+      // INCOME e TRANSFER_IN somam ao saldo (dinheiro entrando)
+      // EXPENSE e TRANSFER_OUT subtraem do saldo (dinheiro saindo)
+      if (mov.type === MovementType.INCOME || mov.type === MovementType.TRANSFER_IN) {
         movementsBalance += Number(mov.amount);
       } else {
         movementsBalance -= Number(mov.amount);

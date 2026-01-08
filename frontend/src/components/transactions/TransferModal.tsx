@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,8 @@ import { toast } from 'sonner';
 import { accountsService, Account } from '@/services/accountsService';
 import { transactionsService } from '@/services/transactionsService';
 import { CurrencyInputField } from '@/components/ui/currency-input';
+import { emitDataChange } from '@/hooks/useDataRefresh';
+
 
 interface TransferModalProps {
   open: boolean;
@@ -87,8 +90,8 @@ export function TransferModal({ open, onOpenChange, onSuccess }: TransferModalPr
     setSubmitting(true);
 
     try {
-      const cleanAmount = amount.replace(/[^0-9,]/g, '').replace(',', '.');
-      const numericAmount = parseFloat(cleanAmount);
+      // Valor já vem como string numérica pura do CurrencyInputField (ex: "1234.56")
+      const numericAmount = parseFloat(amount);
 
       if (numericAmount <= 0) {
         toast.error('O valor deve ser maior que zero');
@@ -106,7 +109,7 @@ export function TransferModal({ open, onOpenChange, onSuccess }: TransferModalPr
       await transactionsService.create({
         description: transferDescription,
         amount: numericAmount,
-        date: new Date().toISOString(),
+        date: format(new Date(), 'yyyy-MM-dd'),
         type: 'transfer_out',
         profileId,
         accountId: sourceAccountId,
@@ -116,7 +119,7 @@ export function TransferModal({ open, onOpenChange, onSuccess }: TransferModalPr
       await transactionsService.create({
         description: transferDescription,
         amount: numericAmount,
-        date: new Date().toISOString(),
+        date: format(new Date(), 'yyyy-MM-dd'),
         type: 'transfer_in',
         profileId,
         accountId: destinationAccountId,
@@ -132,8 +135,8 @@ export function TransferModal({ open, onOpenChange, onSuccess }: TransferModalPr
       
       onOpenChange(false);
       
-      // Dispatch custom event to refresh accounts page
-      window.dispatchEvent(new CustomEvent('accounts-refresh'));
+      // Emite eventos de mudança para atualizar outras telas
+      emitDataChange(['transactions', 'accounts']);
       
       // Notify parent of successful transfer
       if (onSuccess) {

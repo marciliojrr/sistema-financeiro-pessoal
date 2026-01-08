@@ -276,25 +276,58 @@ export class ReportsService {
     // Assuming profileId is passed for dashboard context usually.
 
     let upcomingBills: any[] = [];
-    if (profileId) {
-      const recurrings = await this.recurringService.findAll(profileId, userId);
-      // Filter active and nextRun within 7 days
-      const limitDate = new Date();
-      limitDate.setDate(limitDate.getDate() + 7);
+    
+    const limitDate = new Date();
+    limitDate.setDate(limitDate.getDate() + 7);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
 
-      upcomingBills = recurrings
+    if (profileId) {
+      // 1. Fetch Recurring Transactions
+      const recurrings = await this.recurringService.findAll(profileId, userId);
+      const recurringBills = recurrings
         .filter(
           (r) =>
             r.active &&
             new Date(r.nextRun) <= limitDate &&
-            new Date(r.nextRun) >= new Date(),
+            new Date(r.nextRun) >= today,
         )
         .map((r) => ({
           description: r.description,
-          amount: r.amount,
+          amount: parseFloat(r.amount.toString()),
           date: r.nextRun,
           category: r.category?.name,
+          type: 'RECURRING',
         }));
+
+      // 2. Fetch Pending/Planned Manual Transactions
+      const pendingMovements = await this.movementRepository
+        .createQueryBuilder('movement')
+        .leftJoinAndSelect('movement.category', 'category')
+        .leftJoin('movement.profile', 'profile')
+        .where('profile.id = :profileId', { profileId })
+        .andWhere('movement.type = :type', { type: MovementType.EXPENSE })
+        .andWhere('movement.status IN (:...statuses)', { 
+          statuses: ['pending', 'planned'] 
+        })
+        .andWhere('movement.date BETWEEN :startDate AND :endDate', {
+          startDate: today,
+          endDate: limitDate,
+        })
+        .getMany();
+
+      const manualBills = pendingMovements.map((m) => ({
+        description: m.description,
+        amount: parseFloat(m.amount.toString()),
+        date: m.date,
+        category: m.category?.name,
+        type: 'MANUAL',
+      }));
+
+      // Merge and Sort
+      upcomingBills = [...recurringBills, ...manualBills].sort((a, b) => {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      });
     }
 
     return {

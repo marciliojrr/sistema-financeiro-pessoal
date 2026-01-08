@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
 
 export default function CategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -34,8 +35,9 @@ export default function CategoriesPage() {
         incomeSource: undefined as IncomeSource | undefined,
     });
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
+            setLoading(true);
             const profileId = localStorage.getItem('profileId');
             const data = await categoriesService.getAll(profileId || undefined);
             setCategories(data);
@@ -45,11 +47,14 @@ export default function CategoriesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Escuta eventos de mudança de dados para atualizar automaticamente
+    useDataRefresh('categories', fetchCategories);
 
     useEffect(() => {
         fetchCategories();
-    }, []);
+    }, [fetchCategories]);
 
     const resetForm = () => {
         setFormData({ name: '', type: 'EXPENSE', isFixed: false, incomeSource: undefined });
@@ -88,7 +93,8 @@ export default function CategoriesPage() {
                 toast.success('Categoria criada com sucesso');
             }
             setIsDialogOpen(false);
-            fetchCategories();
+            // Emite evento para atualizar outras telas
+            emitDataChange('categories');
             resetForm();
         } catch (error) {
             console.error(error);
@@ -101,7 +107,8 @@ export default function CategoriesPage() {
         try {
             await categoriesService.delete(id);
             toast.success('Categoria excluída com sucesso');
-            fetchCategories();
+            // Emite evento para atualizar outras telas
+            emitDataChange('categories');
         } catch (error) {
             console.error(error);
             toast.error('Erro ao excluir categoria');

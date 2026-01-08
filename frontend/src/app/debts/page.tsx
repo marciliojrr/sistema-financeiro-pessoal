@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +21,8 @@ import { debtsService, Debt } from '@/services/debtsService';
 import { CurrencyInputField } from '@/components/ui/currency-input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
+import { format } from 'date-fns';
 
 const debtSchema = z.object({
   description: z.string().min(1, 'Nome obrigatório'),
@@ -45,13 +47,14 @@ export default function DebtsPage() {
       description: '',
       totalAmount: '',
       totalInstallments: '1',
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: format(new Date(), 'yyyy-MM-dd'),
       dueDateDay: '5',
     },
   });
 
-  const fetchDebts = async () => {
+  const fetchDebts = useCallback(async () => {
     try {
+      setLoading(true);
       const data = await debtsService.getAll();
       setDebts(data);
     } catch (error) {
@@ -60,11 +63,14 @@ export default function DebtsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Escuta eventos de mudança de dados para atualizar automaticamente
+  useDataRefresh('debts', fetchDebts);
 
   useEffect(() => {
     fetchDebts();
-  }, []);
+  }, [fetchDebts]);
 
   const resetForm = () => {
     setEditingDebt(null);
@@ -72,7 +78,7 @@ export default function DebtsPage() {
       description: '',
       totalAmount: '',
       totalInstallments: '1',
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: format(new Date(), 'yyyy-MM-dd'),
       dueDateDay: '5',
     });
   };
@@ -81,7 +87,7 @@ export default function DebtsPage() {
     setEditingDebt(debt);
     form.reset({
       description: debt.description,
-      totalAmount: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(debt.totalAmount),
+      totalAmount: String(debt.totalAmount),
       totalInstallments: debt.totalInstallments.toString(),
       startDate: debt.startDate.split('T')[0],
       dueDateDay: debt.dueDateDay.toString(),
@@ -99,11 +105,18 @@ export default function DebtsPage() {
     }
 
     try {
-      const cleanAmount = data.totalAmount.replace(/[^0-9,]/g, '').replace(',', '.');
+      // Valor já vem como string numérica pura do CurrencyInputField
+      const numericAmount = parseFloat(data.totalAmount);
+      
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        toast.error('Valor inválido');
+        setSubmitting(false);
+        return;
+      }
       
       const payload = {
         description: data.description,
-        totalAmount: parseFloat(cleanAmount),
+        totalAmount: numericAmount,
         totalInstallments: parseInt(data.totalInstallments),
         startDate: data.startDate,
         dueDateDay: parseInt(data.dueDateDay),
@@ -120,7 +133,8 @@ export default function DebtsPage() {
 
       setIsDialogOpen(false);
       resetForm();
-      fetchDebts();
+      // Emite evento para atualizar outras telas
+      emitDataChange('debts');
     } catch (error) {
       console.error(error);
       toast.error('Erro ao salvar dívida');
@@ -134,7 +148,8 @@ export default function DebtsPage() {
     try {
       await debtsService.delete(id);
       toast.success('Dívida excluída');
-      fetchDebts();
+      // Emite evento para atualizar outras telas
+      emitDataChange('debts');
     } catch {
       toast.error('Erro ao excluir');
     }

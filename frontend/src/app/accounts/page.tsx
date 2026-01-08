@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ import {
   TotalBalance,
 } from '@/services/accountsService';
 import { profileService } from '@/services/profileService';
+import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
 
 interface Profile {
   id: string;
@@ -66,19 +67,7 @@ export default function AccountsPage() {
     profileId: '',
   });
 
-  useEffect(() => {
-    fetchData();
-    
-    // Listen for custom refresh events (e.g., after transfers)
-    const handleRefresh = () => fetchData();
-    window.addEventListener('accounts-refresh', handleRefresh);
-    
-    return () => {
-      window.removeEventListener('accounts-refresh', handleRefresh);
-    };
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [accountsData, balanceData, profilesData] = await Promise.all([
@@ -91,8 +80,13 @@ export default function AccountsPage() {
       setProfiles(profilesData);
 
       // Set default profile if available
-      if (profilesData.length > 0 && !formData.profileId) {
-        setFormData((prev) => ({ ...prev, profileId: profilesData[0].id }));
+      if (profilesData.length > 0) {
+        setFormData((prev) => {
+          if (!prev.profileId) {
+            return { ...prev, profileId: profilesData[0].id };
+          }
+          return prev;
+        });
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -100,7 +94,14 @@ export default function AccountsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Escuta eventos de mudança de dados para atualizar automaticamente
+  useDataRefresh(['accounts', 'transactions'], fetchData);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.profileId) {
@@ -119,7 +120,8 @@ export default function AccountsPage() {
       }
       setIsDialogOpen(false);
       resetForm();
-      fetchData();
+      // Emite evento para atualizar outras telas
+      emitDataChange('accounts');
     } catch (error) {
       console.error('Error saving:', error);
       toast.error('Erro ao salvar conta');
@@ -146,12 +148,14 @@ export default function AccountsPage() {
     try {
       await accountsService.delete(id);
       toast.success('Conta excluída');
-      fetchData();
+      // Emite evento para atualizar outras telas
+      emitDataChange('accounts');
     } catch (error) {
       console.error('Error deleting:', error);
       toast.error('Erro ao excluir');
     }
   };
+
 
   const resetForm = () => {
     setEditingAccount(null);

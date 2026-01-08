@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, Edit2, ChevronLeft, ChevronRight, Save, PieChart } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, PieChart } from 'lucide-react';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -31,8 +30,9 @@ import {
 } from '@/services/budgetsService';
 import { categoriesService, Category } from '@/services/categoriesService';
 import { CurrencyInputField } from '@/components/ui/currency-input';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
 
 const budgetSchema = z.object({
   amount: z.string().min(1, 'Valor obrigatório'),
@@ -65,7 +65,7 @@ export default function BudgetsPage() {
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const profileId = localStorage.getItem('profileId');
     try {
@@ -82,11 +82,14 @@ export default function BudgetsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [month, year]);
+
+  // Escuta eventos de mudança de dados para atualizar automaticamente
+  useDataRefresh(['budgets', 'transactions'], fetchData);
 
   useEffect(() => {
     fetchData();
-  }, [month, year]);
+  }, [fetchData]);
 
   const handlePrevMonth = () => {
       if (month === 1) {
@@ -116,10 +119,17 @@ export default function BudgetsPage() {
     }
 
     try {
-        const cleanAmount = data.amount.replace(/[^0-9,]/g, '').replace(',', '.');
+        // Valor já vem como string numérica pura do CurrencyInputField
+        const numericAmount = parseFloat(data.amount);
+        
+        if (isNaN(numericAmount) || numericAmount <= 0) {
+          toast.error('Valor inválido');
+          setSubmitting(false);
+          return;
+        }
         
         await budgetsService.create({
-            amount: parseFloat(cleanAmount),
+            amount: numericAmount,
             month,
             year,
             categoryId: data.categoryId,
@@ -129,7 +139,8 @@ export default function BudgetsPage() {
         toast.success('Orçamento definido!');
         setIsDialogOpen(false);
         form.reset();
-        fetchData();
+        // Emite evento para atualizar outras telas
+        emitDataChange('budgets');
     } catch (error) {
         console.error(error);
         toast.error('Erro ao definir orçamento');
@@ -137,6 +148,7 @@ export default function BudgetsPage() {
         setSubmitting(false);
     }
   };
+
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
@@ -161,7 +173,10 @@ export default function BudgetsPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
                <div className="space-y-2">
                 <Label htmlFor="categoryId">Categoria</Label>
-                <Select onValueChange={(val) => form.setValue('categoryId', val)}>
+                <Select 
+                    value={form.watch('categoryId')} 
+                    onValueChange={(val) => form.setValue('categoryId', val)}
+                >
                     <SelectTrigger>
                         <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>

@@ -25,12 +25,14 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { categoriesService, Category } from '@/services/categoriesService';
-import { transactionsService, CreateTransactionDto, Transaction } from '@/services/transactionsService';
+import { transactionsService, CreateTransactionDto, Transaction, TransactionStatus } from '@/services/transactionsService';
 import { creditCardsService, CreditCard } from '@/services/creditCardsService';
 import { accountsService, Account } from '@/services/accountsService';
 import { useRouter } from 'next/navigation';
 import { CurrencyInputField } from '@/components/ui/currency-input';
 import { cn } from '@/lib/utils';
+import { emitDataChange } from '@/hooks/useDataRefresh';
+import { Switch } from '@/components/ui/switch';
 
 const transactionSchema = z.object({
   description: z.string().min(3, 'Descrição muito curta'),
@@ -41,6 +43,10 @@ const transactionSchema = z.object({
   type: z.enum(['INCOME', 'EXPENSE']),
   categoryId: z.string().optional(),
   isPaid: z.boolean().default(true),
+  paymentMethod: z.enum(['CASH', 'CREDIT_CARD']).default('CASH'),
+  creditCardId: z.string().optional(),
+  installments: z.number().optional(),
+  accountId: z.string().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
@@ -58,7 +64,6 @@ export function TransactionForm({
   initialData, 
   transactionId,
   onSuccess,
-  isModal = false
 }: TransactionFormProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -67,14 +72,33 @@ export function TransactionForm({
   const [loading, setLoading] = useState(false);
   const [suggestedCategory, setSuggestedCategory] = useState<Category | null>(null);
 
-  const form = useForm<TransactionFormData & { paymentMethod: 'CASH' | 'CREDIT_CARD', creditCardId?: string, installments?: number, accountId?: string }>({
+  // Determina o tipo inicial corretamente
+  const getInitialType = (): 'INCOME' | 'EXPENSE' => {
+    if (initialData?.type) {
+      const typeUpper = initialData.type.toUpperCase();
+      if (typeUpper === 'INCOME' || typeUpper === 'EXPENSE') {
+        return typeUpper as 'INCOME' | 'EXPENSE';
+      }
+    }
+    return initialType;
+  };
+
+  // Parseia a data inicial corretamente para evitar problemas de timezone
+  const getInitialDate = (): Date => {
+    if (initialData?.date) {
+      // Se a data vem como string YYYY-MM-DD, cria a data no fuso local
+      const dateStr = initialData.date.split('T')[0];
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return new Date();
+  };
+
+  const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      // Fallback to EXPENSE if type is transfer (transfers shouldn't be edited here)
-      type: (initialData?.type && (initialData.type === 'INCOME' || initialData.type === 'EXPENSE')) 
-        ? initialData.type 
-        : initialType,
-      date: initialData?.date ? new Date(initialData.date) : new Date(),
+      type: getInitialType(),
+      date: getInitialDate(),
       isPaid: initialData?.isPaid ?? true,
       amount: initialData?.amount ? String(initialData.amount) : '',
       description: initialData?.description || '',
@@ -87,6 +111,10 @@ export function TransactionForm({
 
   const type = form.watch('type');
   const paymentMethod = form.watch('paymentMethod');
+  const accountId = form.watch('accountId');
+  const creditCardId = form.watch('creditCardId');
+  const installments = form.watch('installments');
+  const categoryId = form.watch('categoryId');
 
   useEffect(() => {
     const loadData = async () => {
@@ -96,7 +124,7 @@ export function TransactionForm({
                 creditCardsService.getAll(),
                 accountsService.getAll()
             ]);
-            setCategories(allCategories.filter(c => c.type === type));
+            setCategories(allCategories.filter(c => c.type === type.toLowerCase()));
             setCreditCards(allCards);
             setAccounts(allAccounts);
         } catch (error) {
@@ -107,7 +135,7 @@ export function TransactionForm({
     loadData();
   }, [type]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: TransactionFormData) => {
     setLoading(true);
     const profileId = localStorage.getItem('profileId') || localStorage.getItem('userId');
 
@@ -119,8 +147,14 @@ export function TransactionForm({
     }
 
     try {
-      const cleanAmount = data.amount.replace(/[^0-9,]/g, '').replace(',', '.');
-      const numericAmount = parseFloat(cleanAmount);
+      // O valor já vem como string numérica pura do CurrencyInputField (ex: "2603.16")
+      const numericAmount = parseFloat(data.amount);
+      
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        toast.error('Valor inválido');
+        setLoading(false);
+        return;
+      }
       
       if (data.paymentMethod === 'CREDIT_CARD' && data.type === 'EXPENSE') {
           // Credit Card Installment Purchase
@@ -134,22 +168,28 @@ export function TransactionForm({
               productName: data.description,
               totalValue: numericAmount,
               installments: Number(data.installments || 1),
-              purchaseDate: data.date.toISOString(),
+              // Formata a data como YYYY-MM-DD para evitar problemas de timezone
+              purchaseDate: format(data.date, 'yyyy-MM-dd'),
               creditCardId: data.creditCardId,
               categoryId: data.categoryId === 'none' ? undefined : data.categoryId
           });
           toast.success('Compra parcelada registrada com sucesso!');
+          
+          // Emite evento de mudança para atualizar outras telas
+          emitDataChange(['transactions', 'credit-cards', 'invoices']);
 
       } else {
           // Standard Transaction
           const payload: CreateTransactionDto = {
             description: data.description,
             amount: numericAmount,
-            date: data.date.toISOString(),
+            // Formata a data como YYYY-MM-DD para evitar problemas de timezone
+            date: format(data.date, 'yyyy-MM-dd'),
             type: data.type.toLowerCase() as 'income' | 'expense',
             categoryId: data.categoryId === 'none' ? undefined : data.categoryId,
             profileId: profileId!,
             accountId: data.accountId === 'none' ? undefined : data.accountId,
+            status: data.isPaid ? TransactionStatus.COMPLETED : TransactionStatus.PENDING,
           };
 
           if (transactionId) {
@@ -159,6 +199,9 @@ export function TransactionForm({
             await transactionsService.create(payload);
             toast.success('Transação salva com sucesso!');
           }
+          
+          // Emite evento de mudança para atualizar outras telas
+          emitDataChange(['transactions', 'accounts']);
       }
       
       if (onSuccess) {
@@ -180,7 +223,7 @@ export function TransactionForm({
       <div className="space-y-2">
         <Label htmlFor="type">Tipo</Label>
         <Select 
-            value={form.watch('type')}
+            value={type}
             onValueChange={(val) => form.setValue('type', val as 'INCOME' | 'EXPENSE')} 
         >
           <SelectTrigger>
@@ -262,8 +305,8 @@ export function TransactionForm({
           <div className="space-y-2">
             <Label htmlFor="paymentMethod">Método de Pagamento</Label>
             <Select 
-                onValueChange={(val) => form.setValue('paymentMethod', val as any)} 
-                defaultValue="CASH"
+                value={paymentMethod}
+                onValueChange={(val) => form.setValue('paymentMethod', val as 'CASH' | 'CREDIT_CARD')} 
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o método" />
@@ -279,7 +322,10 @@ export function TransactionForm({
       {paymentMethod === 'CASH' && (
         <div className="space-y-2 p-4 bg-muted/50 rounded-lg border border-border/50">
           <Label htmlFor="accountId">Conta (Opcional)</Label>
-          <Select onValueChange={(val) => form.setValue('accountId', val)} defaultValue={form.getValues('accountId')}>
+          <Select 
+            value={accountId}
+            onValueChange={(val) => form.setValue('accountId', val)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione a conta" />
             </SelectTrigger>
@@ -298,7 +344,10 @@ export function TransactionForm({
           <div className="space-y-4 border-l-2 border-primary/50 pl-4">
               <div className="space-y-2">
                 <Label htmlFor="creditCardId">Cartão de Crédito</Label>
-                <Select onValueChange={(val) => form.setValue('creditCardId', val)}>
+                <Select 
+                  value={creditCardId || ''}
+                  onValueChange={(val) => form.setValue('creditCardId', val)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o cartão" />
                   </SelectTrigger>
@@ -311,7 +360,10 @@ export function TransactionForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="installments">Parcelas</Label>
-                <Select onValueChange={(val) => form.setValue('installments', Number(val))} defaultValue="1">
+                <Select 
+                  value={String(installments || 1)}
+                  onValueChange={(val) => form.setValue('installments', Number(val))}
+                >
                     <SelectTrigger>
                         <SelectValue placeholder="Número de parcelas" />
                     </SelectTrigger>
@@ -329,7 +381,7 @@ export function TransactionForm({
 
       <div className="space-y-2">
         <Label htmlFor="categoryId">Categoria</Label>
-        <Select value={form.watch('categoryId')} onValueChange={(val) => form.setValue('categoryId', val)}>
+        <Select value={categoryId} onValueChange={(val) => form.setValue('categoryId', val)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione uma categoria" />
           </SelectTrigger>
@@ -376,6 +428,19 @@ export function TransactionForm({
         {form.formState.errors.date && (
             <p className="text-sm text-red-500">{form.formState.errors.date?.message}</p>
         )}
+      </div>
+
+      <div className="flex items-center space-x-2 p-4 bg-muted/30 rounded-lg">
+          <Switch
+              id="isPaid"
+              checked={form.watch('isPaid')}
+              onCheckedChange={(checked) => form.setValue('isPaid', checked)}
+          />
+          <Label htmlFor="isPaid" className="cursor-pointer">
+              {form.watch('isPaid') 
+                ? (type === 'EXPENSE' ? 'Conta Paga' : 'Receita Recebida') 
+                : (type === 'EXPENSE' ? 'Conta Pendente' : 'Receita Pendente')}
+          </Label>
       </div>
 
       <Button type="submit" className="w-full" disabled={loading}>

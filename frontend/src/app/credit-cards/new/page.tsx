@@ -49,9 +49,9 @@ export default function NewCreditCardPage() {
         }
 
         try {
-            // CurrencyInput masks as string, convert to float for API
+            // Valor já vem como string numérica pura do CurrencyInputField
             const limitValue = typeof data.limit === 'string' 
-                ? parseFloat(data.limit.replace(/[^0-9,]/g, '').replace(',', '.'))
+                ? parseFloat(data.limit)
                 : data.limit;
 
             const payload: CreateCreditCardDto = {
@@ -112,7 +112,7 @@ export default function NewCreditCardPage() {
                                 id="limit"
                                 placeholder="0,00"
                                 onValueChange={(val) => form.setValue('limit', val || '')} 
-                                value={form.getValues('limit')}
+                                value={form.watch('limit')}
                             />
                             {form.formState.errors.limit && <p className="text-sm text-red-500">{form.formState.errors.limit.message?.toString()}</p>}
                         </div>

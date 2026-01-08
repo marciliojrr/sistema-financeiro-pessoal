@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 
 import { MobileLayout } from '@/components/layouts/MobileLayout';
@@ -9,11 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { dashboardService, DashboardSummary } from '@/services/dashboardService';
 import { transactionsService, Transaction } from '@/services/transactionsService';
+import { accountsService, TotalBalance } from '@/services/accountsService';
 import { ExpensesChart } from '@/components/dashboard/ExpensesChart';
 import { MonthlyEvolutionChart } from '@/components/dashboard/MonthlyEvolutionChart';
 import { BudgetComparisonChart } from '@/components/dashboard/BudgetComparisonChart';
 import { toast } from 'sonner';
-import { ArrowDownIcon, ArrowUpIcon, Wallet, List } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, Wallet, List, TrendingUp } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
 
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { ProfileSwitcher } from '@/components/ProfileSwitcher';
 import { ProfileNotificationModal } from '@/components/ProfileNotificationModal';
 import { UserAvatar } from '@/components/UserAvatar';
+import { useDataRefresh } from '@/hooks/useDataRefresh';
 
 export default function DashboardPage() {
   const { userName, userAvatar } = useAuth();
@@ -34,6 +36,7 @@ export default function DashboardPage() {
   const [reserves, setReserves] = useState<{ name: string; current: number; target: number; percentage: number }[]>([]);
   const [latestTransactions, setLatestTransactions] = useState<Transaction[]>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [totalBalance, setTotalBalance] = useState<TotalBalance | null>(null);
 
   // Show profile notification on first visit after login
   useEffect(() => {
@@ -46,42 +49,53 @@ export default function DashboardPage() {
 
   const activeProfileName = profiles.find(p => p.id === currentProfileId)?.name || 'Principal';
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const currentDate = new Date();
-        const month = currentDate.getMonth() + 1;
-        const year = currentDate.getFullYear();
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      const currentDate = new Date();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
 
-        const [summary, expenses, fixed, reservesData, transactions, evolution, budget] = await Promise.all([
-           dashboardService.getSummary(),
-           dashboardService.getExpensesByCategory(month, year),
-           dashboardService.getFixedExpenses(month, year),
-           dashboardService.getReservesProgress(),
-           transactionsService.getAll(),
-           dashboardService.getMonthlyEvolution(6),
-           dashboardService.getBudgetPlanning(month, year),
-        ]);
-        
-        setData(summary);
-        setChartData(expenses);
-        setFixedExpenses(fixed);
-        setReserves(reservesData);
-        setEvolutionData(evolution);
-        setBudgetData(budget);
-        // Filtrar parcelas de compras parceladas e pegar apenas as 5 mais recentes
-        const filteredTransactions = transactions.filter(t => !t.installmentPurchaseId);
-        setLatestTransactions(filteredTransactions.slice(0, 5));
-      } catch (error) {
-        console.error('Failed to fetch dashboard:', error);
-        toast.error('Erro ao carregar dados do dashboard.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboard();
+      const [summary, expenses, fixed, reservesData, transactions, evolution, budget, patrimonio] = await Promise.all([
+         dashboardService.getSummary(),
+         dashboardService.getExpensesByCategory(month, year),
+         dashboardService.getFixedExpenses(month, year),
+         dashboardService.getReservesProgress(),
+         transactionsService.getAll(),
+         dashboardService.getMonthlyEvolution(6),
+         dashboardService.getBudgetPlanning(month, year),
+         accountsService.getTotalBalance(),
+      ]);
+      
+      setData(summary);
+      setChartData(expenses);
+      setFixedExpenses(fixed);
+      setReserves(reservesData);
+      setEvolutionData(evolution);
+      setBudgetData(budget);
+      setTotalBalance(patrimonio);
+      // Filtra parcelas de compras e transfer_in (para consolidar transferências)
+      const filteredTransactions = transactions.filter(t => {
+        if (t.installmentPurchaseId) return false;
+        // Oculta transfer_in para não duplicar transferências na listagem
+        if (t.type.toUpperCase() === 'TRANSFER_IN') return false;
+        return true;
+      });
+      setLatestTransactions(filteredTransactions.slice(0, 5));
+    } catch (error) {
+      console.error('Failed to fetch dashboard:', error);
+      toast.error('Erro ao carregar dados do dashboard.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Escuta eventos de mudança de dados para atualizar automaticamente
+  useDataRefresh('dashboard', fetchDashboard);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -123,46 +137,66 @@ export default function DashboardPage() {
       </header>
       
       <div className="space-y-4">
-         {/* KPI Cards */}
-         <div className="grid grid-cols-2 gap-4">
+         {/* Patrimônio Card - Featured */}
+         <Card className="bg-primary text-primary-foreground border-none">
+            <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-medium text-primary-foreground/80 flex items-center gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Patrimônio
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 flex items-center justify-between">
+                 {loading ? <Skeleton className="h-8 w-32 bg-primary-foreground/20" /> : (
+                     <p className="text-3xl font-bold">{formatCurrency(totalBalance?.totalBalance || 0)}</p>
+                 )}
+                 <TrendingUp className="h-6 w-6 text-primary-foreground/60" />
+            </CardContent>
+         </Card>
+
+         {/* KPI Cards - Receitas, Despesas, Resultado */}
+         <div className="grid grid-cols-3 gap-3">
             <Card>
-                <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Receitas</CardTitle>
-                    <ArrowUpIcon className="h-4 w-4 text-green-500" />
+                <CardHeader className="p-3 pb-1">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      Receitas
+                      <ArrowUpIcon className="h-3 w-3 text-green-500" />
+                    </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    {loading ? <Skeleton className="h-6 w-20" /> : (
-                         <p className="text-lg font-bold text-green-600">{formatCurrency(data?.balance.totalIncome || 0)}</p>
+                <CardContent className="p-3 pt-0">
+                    {loading ? <Skeleton className="h-5 w-16" /> : (
+                         <p className="text-sm font-bold text-green-600">{formatCurrency(data?.balance.totalIncome || 0)}</p>
                     )}
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Despesas</CardTitle>
-                    <ArrowDownIcon className="h-4 w-4 text-red-500" />
+                <CardHeader className="p-3 pb-1">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      Despesas
+                      <ArrowDownIcon className="h-3 w-3 text-red-500" />
+                    </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    {loading ? <Skeleton className="h-6 w-20" /> : (
-                        <p className="text-lg font-bold text-red-600">{formatCurrency(data?.balance.totalExpense || 0)}</p>
+                <CardContent className="p-3 pt-0">
+                    {loading ? <Skeleton className="h-5 w-16" /> : (
+                        <p className="text-sm font-bold text-red-600">{formatCurrency(data?.balance.totalExpense || 0)}</p>
+                    )}
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="p-3 pb-1">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">
+                      Resultado
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                    {loading ? <Skeleton className="h-5 w-16" /> : (
+                        <p className={`text-sm font-bold ${(data?.balance.balance || 0) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                          {(data?.balance.balance || 0) >= 0 ? '+' : ''}{formatCurrency(data?.balance.balance || 0)}
+                        </p>
                     )}
                 </CardContent>
             </Card>
          </div>
 
-         {/* Balance Card - Featured */}
-         <Card className="bg-primary text-primary-foreground border-none">
-            <CardHeader className="p-4 pb-2">
-                <CardTitle className="text-sm font-medium text-primary-foreground/80 flex items-center gap-2">
-                  <Wallet className="h-4 w-4" />
-                  Saldo Atual
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-                 {loading ? <Skeleton className="h-8 w-32 bg-primary-foreground/20" /> : (
-                     <p className="text-3xl font-bold">{formatCurrency(data?.balance.balance || 0)}</p>
-                 )}
-            </CardContent>
-         </Card>
 
          {/* Latest Transactions */}
          <Card>
@@ -189,8 +223,9 @@ export default function DashboardPage() {
                     latestTransactions.map((t) => {
                       const typeUpper = t.type.toUpperCase();
                       const isTransfer = typeUpper === 'TRANSFER_IN' || typeUpper === 'TRANSFER_OUT';
+                      // Transferências aparecem só como transfer_out (consolidado)
                       const typeLabel = isTransfer 
-                        ? (typeUpper === 'TRANSFER_OUT' ? 'Transferência ↗' : 'Transferência ↙')
+                        ? 'Transferência'
                         : (typeUpper === 'INCOME' ? 'Receita' : 'Despesa');
                       const colorClass = isTransfer 
                         ? 'text-blue-600' 

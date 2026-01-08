@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal';
+import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
 
 const MONTHS = [
     { value: 0, label: 'Janeiro' },
@@ -41,10 +42,17 @@ export default function TransactionsPage() {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         try {
+            setLoading(true);
             const data = await transactionsService.getAll();
-            const filtered = data.filter(t => !t.installmentPurchaseId);
+            // Filtra parcelas de compras parceladas e transfer_in (para consolidar transferências)
+            const filtered = data.filter(t => {
+                if (t.installmentPurchaseId) return false;
+                // Oculta transfer_in para não duplicar transferências na listagem
+                if (t.type.toUpperCase() === 'TRANSFER_IN') return false;
+                return true;
+            });
             setTransactions(filtered);
         } catch (error) {
             console.error('Failed to fetch transactions', error);
@@ -52,7 +60,10 @@ export default function TransactionsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Escuta eventos de mudança de dados para atualizar automaticamente
+    useDataRefresh('transactions', fetchTransactions);
 
     // Filter transactions by selected period
     useEffect(() => {
@@ -72,7 +83,7 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         fetchTransactions();
-    }, []);
+    }, [fetchTransactions]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
@@ -80,7 +91,8 @@ export default function TransactionsPage() {
         try {
             await transactionsService.delete(id);
             toast.success('Transação excluída');
-            fetchTransactions();
+            // Emite evento para atualizar outras telas
+            emitDataChange(['transactions', 'accounts']);
         } catch (error) {
             console.error('Failed to delete transaction', error);
             toast.error('Erro ao excluir transação');
@@ -287,8 +299,9 @@ export default function TransactionsPage() {
                             {filteredTransactions.map((t) => {
                                 const typeUpper = t.type.toUpperCase();
                                 const isTransfer = typeUpper === 'TRANSFER_IN' || typeUpper === 'TRANSFER_OUT';
+                                // Transferências aparecem só como transfer_out (consolidado)
                                 const typeLabel = isTransfer 
-                                    ? (typeUpper === 'TRANSFER_OUT' ? 'Transferência ↗' : 'Transferência ↙')
+                                    ? 'Transferência'
                                     : (typeUpper === 'INCOME' ? 'Receita' : 'Despesa');
                                 const dotColor = isTransfer 
                                     ? 'bg-blue-500' 
