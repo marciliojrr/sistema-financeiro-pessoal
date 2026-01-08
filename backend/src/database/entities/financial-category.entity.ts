@@ -18,6 +18,11 @@ export enum IncomeSource {
   OTHER = 'OTHER',
 }
 
+export enum CategoryType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
+}
+
 @Entity()
 export class FinancialCategory {
   @PrimaryGeneratedColumn('uuid')
@@ -26,8 +31,11 @@ export class FinancialCategory {
   @Column()
   name: string;
 
-  @Column()
-  type: string;
+  @Column({
+    type: 'enum',
+    enum: CategoryType,
+  })
+  type: CategoryType;
 
   @ManyToOne(() => Profile, (profile) => profile.categories, {
     onDelete: 'CASCADE',

@@ -197,6 +197,7 @@ export class BudgetsService {
         month,
         year,
       },
+      relations: ['profile'],
     });
   }
 

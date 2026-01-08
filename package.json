@@ -1,6 +1,12 @@
 {
   "name": "sistema-financeiro-pessoal",
   "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "dev": "docker-compose up --build",
     "dev:detached": "docker-compose up -d --build",
@@ -11,7 +17,9 @@
     "logs:postgres": "docker-compose logs -f postgres",
     "shell:backend": "docker-compose exec backend sh",
     "shell:frontend": "docker-compose exec frontend sh",
-    "shell:postgres": "docker-compose exec postgres psql -U financeiro_user -d financeiro_db"
+    "shell:postgres": "docker-compose exec postgres psql -U financeiro_user -d financeiro_db",
+    "build:shared": "cd shared && npm run build",
+    "prepare": "npm run build:shared"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
@@ -24,3 +32,4 @@
     "@types/swagger-ui-express": "^4.1.8"
   }
 }
+

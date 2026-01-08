@@ -15,6 +15,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +36,7 @@ export default function CategoriesPage() {
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -102,16 +113,21 @@ export default function CategoriesPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
+    const handleDeleteClick = (id: string) => {
+        setDeleteConfirmId(id);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteConfirmId) return;
         try {
-            await categoriesService.delete(id);
+            await categoriesService.delete(deleteConfirmId);
             toast.success('Categoria excluída com sucesso');
-            // Emite evento para atualizar outras telas
             emitDataChange('categories');
         } catch (error) {
             console.error(error);
             toast.error('Erro ao excluir categoria');
+        } finally {
+            setDeleteConfirmId(null);
         }
     };
 
@@ -146,7 +162,7 @@ export default function CategoriesPage() {
                             <h2 className="text-sm font-semibold text-muted-foreground mb-2 px-1">Receitas</h2>
                             <div className="grid gap-3">
                                 {categories.filter(c => c.type === 'INCOME').map((category) => (
-                                    <CategoryItem key={category.id} category={category} onEdit={handleOpenDialog} onDelete={handleDelete} />
+                                    <CategoryItem key={category.id} category={category} onEdit={handleOpenDialog} onDelete={handleDeleteClick} />
                                 ))}
                             </div>
                         </div>
@@ -158,7 +174,7 @@ export default function CategoriesPage() {
                             <h2 className="text-sm font-semibold text-muted-foreground mb-2 px-1">Despesas</h2>
                             <div className="grid gap-3">
                                 {categories.filter(c => c.type === 'EXPENSE').map((category) => (
-                                    <CategoryItem key={category.id} category={category} onEdit={handleOpenDialog} onDelete={handleDelete} />
+                                    <CategoryItem key={category.id} category={category} onEdit={handleOpenDialog} onDelete={handleDeleteClick} />
                                 ))}
                             </div>
                         </div>
@@ -239,6 +255,23 @@ export default function CategoriesPage() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+                            Excluir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </MobileLayout>
     );
 }

@@ -6,7 +6,7 @@ import {
   IsEnum,
   IsBoolean,
 } from 'class-validator';
-import { IncomeSource } from '../../database/entities/financial-category.entity';
+import { IncomeSource, CategoryType } from '../../database/entities/financial-category.entity';
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -18,12 +18,13 @@ export class CreateCategoryDto {
   name: string;
 
   @ApiProperty({
-    example: 'despesa fixa',
-    description: 'Tipo da categoria: despesa fixa, variável, etc.',
+    enum: CategoryType,
+    example: CategoryType.EXPENSE,
+    description: 'Tipo da categoria: INCOME ou EXPENSE',
   })
   @IsNotEmpty()
-  @IsString()
-  type: string;
+  @IsEnum(CategoryType)
+  type: CategoryType;
 
   @ApiProperty({ example: true, description: 'Categoria está ativa?' })
   @IsOptional()

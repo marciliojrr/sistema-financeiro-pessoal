@@ -31,6 +31,26 @@ export class CategoriesService {
     return savedCategory;
   }
 
+  async updateCategory(id: string, data: Partial<CreateCategoryDto>, userId: string) {
+    const category = await this.findOne(id);
+    if (!category) {
+      throw new NotFoundException('Categoria não encontrada.');
+    }
+
+    Object.assign(category, data);
+    const updatedCategory = await this.categoryRepository.save(category);
+
+    await this.auditLogsService.logChange(
+      userId,
+      'UPDATE',
+      'FinancialCategory',
+      id,
+      { old: category, new: updatedCategory },
+    );
+
+    return updatedCategory;
+  }
+
   findAll(userId: string) {
     return this.categoryRepository.find({
       where: { profile: { user: { id: userId } } },
