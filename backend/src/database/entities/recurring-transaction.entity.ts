@@ -43,7 +43,7 @@ export class RecurringTransaction {
   })
   frequency: RecurrenceFrequency;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   startDate: string;
 
   @Column({ type: 'date', nullable: true })
@@ -52,7 +52,7 @@ export class RecurringTransaction {
   @Column({ type: 'date', nullable: true })
   lastRun: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   nextRun: string;
 
   @Column({ default: true })
