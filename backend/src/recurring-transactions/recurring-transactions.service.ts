@@ -86,11 +86,16 @@ export class RecurringTransactionsService {
     }
 
     const transaction = this.recurringRepo.create({
-      ...data,
+      description: data.description,
+      amount: data.amount,
+      type: data.type,
+      frequency: data.frequency,
+      startDate: data.startDate,
+      endDate: data.endDate,
       profile,
       category,
       reserve,
-      nextRun, // Usa a data calculada (futura se skipPastRuns)
+      nextRun: nextRun.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
     });
 
     const savedTransaction = await this.recurringRepo.save(transaction);
@@ -99,11 +104,11 @@ export class RecurringTransactionsService {
       userId,
       'CREATE',
       'RecurringTransaction',
-      savedTransaction.id,
+      (savedTransaction as RecurringTransaction).id,
       savedTransaction,
     );
 
-    return savedTransaction;
+    return savedTransaction as RecurringTransaction;
   }
 
   async findAll(profileId: string, userId: string) {
@@ -187,10 +192,11 @@ export class RecurringTransactionsService {
     const now = new Date();
 
     // Buscar todas as ativas onde nextRun <= agora
+    const nowStr = now.toISOString().split('T')[0]; // Convert to YYYY-MM-DD string
     const pendings = await this.recurringRepo.find({
       where: {
         active: true,
-        nextRun: LessThanOrEqual(now),
+        nextRun: LessThanOrEqual(nowStr),
       },
       relations: ['profile', 'category', 'reserve'],
     });
@@ -248,7 +254,8 @@ export class RecurringTransactionsService {
 
       // 2. Atualizar lastRun e nextRun
       item.lastRun = item.nextRun; // Foi executado referente a esta data
-      item.nextRun = this.calculateNextRun(item.nextRun, item.frequency);
+      const nextRunDate = this.calculateNextRun(new Date(item.nextRun), item.frequency);
+      item.nextRun = nextRunDate.toISOString().split('T')[0]; // Convert back to string
 
       // Verificar se passou do endDate (se houver)
       if (item.endDate && item.nextRun > item.endDate) {
