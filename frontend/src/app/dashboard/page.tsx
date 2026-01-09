@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,9 +11,6 @@ import { Button } from '@/components/ui/button';
 import { dashboardService, DashboardSummary } from '@/services/dashboardService';
 import { transactionsService, Transaction } from '@/services/transactionsService';
 import { accountsService, TotalBalance } from '@/services/accountsService';
-import { ExpensesChart } from '@/components/dashboard/ExpensesChart';
-import { MonthlyEvolutionChart } from '@/components/dashboard/MonthlyEvolutionChart';
-import { BudgetComparisonChart } from '@/components/dashboard/BudgetComparisonChart';
 import { toast } from 'sonner';
 import { ArrowDownIcon, ArrowUpIcon, Wallet, List, TrendingUp } from 'lucide-react';
 import { parseISO, format } from 'date-fns';
@@ -23,6 +21,22 @@ import { ProfileSwitcher } from '@/components/ProfileSwitcher';
 import { ProfileNotificationModal } from '@/components/ProfileNotificationModal';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useDataRefresh } from '@/hooks/useDataRefresh';
+
+// Lazy load chart components to reduce initial bundle size (~400KB savings)
+const ExpensesChart = dynamic(
+  () => import('@/components/dashboard/ExpensesChart').then(mod => ({ default: mod.ExpensesChart })),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-lg" /> }
+);
+
+const MonthlyEvolutionChart = dynamic(
+  () => import('@/components/dashboard/MonthlyEvolutionChart').then(mod => ({ default: mod.MonthlyEvolutionChart })),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-lg" /> }
+);
+
+const BudgetComparisonChart = dynamic(
+  () => import('@/components/dashboard/BudgetComparisonChart').then(mod => ({ default: mod.BudgetComparisonChart })),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-lg" /> }
+);
 
 export default function DashboardPage() {
   const { userName, userAvatar } = useAuth();

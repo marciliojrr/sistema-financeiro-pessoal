@@ -42,8 +42,15 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+interface Purchase {
+    id: string;
+    productName: string;
+    installments: number;
+    totalValue: number;
+}
+
 interface ExtendedCreditCard extends CreditCard {
-    purchases: any[];
+    purchases: Purchase[];
 }
 
 interface InvoiceWithAmount extends CreditCardInvoice {
@@ -65,6 +72,9 @@ export default function CardDashboardPage() {
     const [paymentAmount, setPaymentAmount] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [paymentLoading, setPaymentLoading] = useState(false);
+    
+    // Close Invoice Modal State
+    const [closeInvoiceModalOpen, setCloseInvoiceModalOpen] = useState(false);
 
     const formatCurrency = (value: number | undefined | null) => {
         const safeValue = Number(value);
@@ -144,7 +154,7 @@ export default function CardDashboardPage() {
             toast.success("Pagamento registrado com sucesso!");
             setPaymentModalOpen(false);
             fetchInvoices();
-        } catch (e) {
+        } catch {
             toast.error("Erro ao registrar pagamento");
         } finally {
             setPaymentLoading(false);
@@ -211,7 +221,7 @@ export default function CardDashboardPage() {
                         <span className="text-xs">Nova Compra</span>
                     </Button>
                     
-                    <Dialog>
+                    <Dialog open={closeInvoiceModalOpen} onOpenChange={setCloseInvoiceModalOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" className="h-auto py-4 flex flex-col gap-2">
                                 <FileText className="h-5 w-5 text-green-600" />
@@ -233,8 +243,9 @@ export default function CardDashboardPage() {
                                 try {
                                     await creditCardsService.closeInvoice(card.id, year, month);
                                     toast.success("Fatura fechada com sucesso!");
+                                    setCloseInvoiceModalOpen(false);
                                     fetchInvoices();
-                                } catch (err) {
+                                } catch {
                                     toast.error("Erro ao fechar fatura (verifique se já existe).");
                                 }
                             }}>
@@ -251,6 +262,9 @@ export default function CardDashboardPage() {
                                     </div>
                                 </div>
                                 <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setCloseInvoiceModalOpen(false)}>
+                                        Cancelar
+                                    </Button>
                                     <Button type="submit">Confirmar Fechamento</Button>
                                 </DialogFooter>
                             </form>
@@ -318,7 +332,7 @@ export default function CardDashboardPage() {
                             <div className="text-center py-8 text-muted-foreground">
                                 <Receipt className="h-12 w-12 mx-auto mb-2 opacity-30" />
                                 <p>Nenhuma fatura fechada ainda.</p>
-                                <p className="text-xs mt-1">Use o botão "Fechar Fatura" para consolidar as compras do mês.</p>
+                                <p className="text-xs mt-1">Use o botão &quot;Fechar Fatura&quot; para consolidar as compras do mês.</p>
                             </div>
                         )}
                     </TabsContent>
@@ -326,7 +340,7 @@ export default function CardDashboardPage() {
                     <TabsContent value="purchases" className="mt-4">
                         <div className="space-y-2">
                              {card.purchases && card.purchases.length > 0 ? (
-                                card.purchases.map((p: any) => (
+                                card.purchases.map((p: Purchase) => (
                                     <div key={p.id} className="flex justify-between p-3 border rounded-md bg-card">
                                         <div>
                                             <p className="font-medium">{p.productName}</p>
@@ -373,8 +387,8 @@ export default function CardDashboardPage() {
                         {/* Payment Type */}
                         <div className="space-y-2">
                             <Label>Tipo de Pagamento</Label>
-                            <RadioGroup value={paymentType} onValueChange={(v) => {
-                                setPaymentType(v as any);
+                            <RadioGroup value={paymentType} onValueChange={(v: 'total' | 'partial' | 'minimum') => {
+                                setPaymentType(v);
                                 const total = Number(selectedInvoice?.amount) || Number(selectedInvoice?.totalAmount) || 0;
                                 if (v === 'total') setPaymentAmount(total.toFixed(2));
                                 else if (v === 'minimum') setPaymentAmount((total * 0.15).toFixed(2)); // 15% mínimo

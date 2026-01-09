@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal';
+import { TransactionModal } from '@/components/transactions/TransactionModal';
 import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
 
 const MONTHS = [
@@ -30,7 +30,6 @@ const MONTHS = [
 ];
 
 export default function TransactionsPage() {
-    const router = useRouter();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,6 +40,10 @@ export default function TransactionsPage() {
     const [showAllTime, setShowAllTime] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
+    
+    // Create/Edit Modal state
+    const [transactionModalOpen, setTransactionModalOpen] = useState(false);
+    const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
 
     const fetchTransactions = useCallback(async () => {
         try {
@@ -187,7 +190,10 @@ export default function TransactionsPage() {
                     <Button variant="outline" size="sm" onClick={handleExportCSV}>
                         <Download className="h-4 w-4" />
                     </Button>
-                    <Button onClick={() => router.push('/transactions/new')}>
+                    <Button onClick={() => {
+                        setEditingTransactionId(null);
+                        setTransactionModalOpen(true);
+                    }}>
                         <Plus className="mr-2 h-4 w-4" /> Nova
                     </Button>
                 </div>
@@ -335,7 +341,10 @@ export default function TransactionsPage() {
                                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
                                             </span>
                                             <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push(`/transactions/${t.id}/edit`)}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                                                    setEditingTransactionId(t.id);
+                                                    setTransactionModalOpen(true);
+                                                }}>
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleDelete(t.id)}>
@@ -360,6 +369,17 @@ export default function TransactionsPage() {
                     handleDelete(id);
                     setDetailModalOpen(false);
                 }}
+            />
+            
+            {/* Modal de criar/editar */}
+            <TransactionModal
+                open={transactionModalOpen}
+                onOpenChange={(open) => {
+                    setTransactionModalOpen(open);
+                    if (!open) setEditingTransactionId(null);
+                }}
+                transactionId={editingTransactionId}
+                type="EXPENSE"
             />
         </MobileLayout>
     );

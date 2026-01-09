@@ -25,7 +25,7 @@ export class FinancialScenario {
 
   // Data de referência para a simulação (ex: "E se eu começar mês que vem?")
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
-  baseDate: Date;
+  baseDate: string;
 
   @ManyToOne(() => Profile, (profile) => profile.scenarios, {
     onDelete: 'CASCADE',

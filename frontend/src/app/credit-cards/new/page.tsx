@@ -19,7 +19,7 @@ const cardSchema = z.object({
   cardName: z.string().min(2, 'Nome muito curto'),
   bank: z.string().min(2, 'Nome do banco muito curto'),
   cardNumber: z.string().length(16, 'O número deve ter 16 dígitos'),
-  limit: z.any(), // Currency input handling handles string/number conversion manually
+  limit: z.union([z.string(), z.number()]),
   closingDay: z.coerce.number().min(1).max(31),
   dueDay: z.coerce.number().min(1).max(31),
 });

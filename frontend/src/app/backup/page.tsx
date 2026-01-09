@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { 
   Download, 
   Upload, 
-  Shield, 
   Database, 
   AlertTriangle,
   CheckCircle2,
@@ -31,7 +30,7 @@ import {
 export default function BackupPage() {
   const [downloading, setDownloading] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [, setSelectedFile] = useState<File | null>(null);
   const [backupPreview, setBackupPreview] = useState<BackupData | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

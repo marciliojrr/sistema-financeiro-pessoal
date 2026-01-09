@@ -69,9 +69,10 @@ export default function RegisterPage() {
       
       toast.success('Conta criada com sucesso! Faça login para continuar.');
       router.push('/login');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      if (error.response?.status === 409) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
           toast.error('Este email já está em uso.');
       } else {
           toast.error('Erro ao criar conta. Tente novamente.');

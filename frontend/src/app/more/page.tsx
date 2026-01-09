@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
@@ -204,14 +204,19 @@ function MenuSection({ title, items }: { title: string; items: MenuItem[] }) {
 export default function MorePage() {
   const { logout, userName, userAvatar, updateUser } = useAuth();
   const { font, setFont } = useFont(); 
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userEmail] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('userEmail');
+    }
+    return null;
+  });
   const [isAvatarDrawerOpen, setIsAvatarDrawerOpen] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUserEmail(localStorage.getItem('userEmail'));
-    setUserId(localStorage.getItem('userId'));
-  }, []);
+  const [userId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('userId');
+    }
+    return null;
+  });
 
   const handleAvatarUpdate = async (newAvatar: string) => {
     if (!userId) return;

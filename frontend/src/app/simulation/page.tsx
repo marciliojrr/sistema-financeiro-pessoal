@@ -14,7 +14,6 @@ import {
   TrendingUp, 
   TrendingDown, 
   PiggyBank, 
-  DollarSign, 
   Calendar,
   ShoppingCart,
   CheckCircle2,

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { MobileLayout } from '@/components/layouts/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -10,11 +9,12 @@ import { Plus, CreditCard as CreditCardIcon, Calendar, Trash2 } from 'lucide-rea
 import { creditCardsService, CreditCard } from '@/services/creditCardsService';
 import { toast } from 'sonner';
 import { useDataRefresh, emitDataChange } from '@/hooks/useDataRefresh';
+import { CreditCardModal } from '@/components/credit-cards/CreditCardModal';
 
 export default function CreditCardsPage() {
-    const router = useRouter();
     const [cards, setCards] = useState<CreditCard[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchCards = useCallback(async () => {
         try {
@@ -56,7 +56,7 @@ export default function CreditCardsPage() {
                     <CreditCardIcon className="h-6 w-6" />
                     Meus Cartões
                 </h1>
-                <Button onClick={() => router.push('/credit-cards/new')}>
+                <Button onClick={() => setIsModalOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" /> Novo
                 </Button>
             </div>
@@ -68,7 +68,7 @@ export default function CreditCardsPage() {
                      <CreditCardIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-50" />
                      <h3 className="text-lg font-medium">Nenhum cartão cadastrado</h3>
                      <p className="text-sm text-muted-foreground mt-2 mb-6">Cadastre seus cartões para gerenciar faturas.</p>
-                     <Button onClick={() => router.push('/credit-cards/new')}>
+                     <Button onClick={() => setIsModalOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" /> Cadastrar Cartão
                     </Button>
                 </div>
@@ -125,6 +125,12 @@ export default function CreditCardsPage() {
                     ))}
                 </div>
             )}
+            
+            {/* Modal de novo cartão */}
+            <CreditCardModal
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+            />
         </MobileLayout>
     );
 }

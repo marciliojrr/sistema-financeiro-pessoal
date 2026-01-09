@@ -28,6 +28,7 @@ export function UserAvatar({ name, avatar, className, size = 'md' }: UserAvatarP
 
   // Check if avatar is a valid URL (http) or local path (/)
   if (avatar && (avatar.startsWith('http') || avatar.startsWith('/'))) {
+    const pixelSizes = { sm: 32, md: 40, lg: 56, xl: 96 };
     return (
       <div
         className={cn(
@@ -39,9 +40,10 @@ export function UserAvatar({ name, avatar, className, size = 'md' }: UserAvatarP
         <Image
           src={avatar}
           alt={name || 'Avatar'}
-          fill
+          width={pixelSizes[size]}
+          height={pixelSizes[size]}
           className="object-cover"
-          unoptimized 
+          sizes={`${pixelSizes[size]}px`}
         />
       </div>
     );

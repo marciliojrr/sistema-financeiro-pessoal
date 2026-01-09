@@ -86,9 +86,10 @@ export default function ImportPage() {
       const data: ImportResult = await response.json();
       setResult(data);
       toast.success(`${data.imported} transações importadas com sucesso!`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Import failed', error);
-      toast.error(error.message || 'Erro ao importar arquivo');
+      const message = error instanceof Error ? error.message : 'Erro ao importar arquivo';
+      toast.error(message);
     } finally {
       setIsUploading(false);
     }

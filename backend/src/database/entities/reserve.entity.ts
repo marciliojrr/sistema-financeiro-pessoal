@@ -28,8 +28,8 @@ export class Reserve {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   currentAmount: number;
 
-  @Column({ nullable: true })
-  targetDate: Date;
+  @Column({ type: 'date', nullable: true })
+  targetDate: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
